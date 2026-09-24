@@ -69,11 +69,5 @@
                 "id": "vpn"
             }
         ]
-    },
-    "background": {
-        "visualiser": {
-            "enabled": true,
-            "autoHide": false
-        }
     }
 }
