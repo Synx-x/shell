@@ -292,6 +292,29 @@ PageBase {
 
                             ColumnLayout {
                                 spacing: 0
+                                visible: VPN.bytesIn.length > 0 || VPN.bytesOut.length > 0
+
+                                StyledText {
+                                    Layout.alignment: Qt.AlignRight
+                                    text: qsTr("Data ↓/↑")
+                                    color: Colours.palette.m3onSurfaceVariant
+                                    font: Tokens.font.label.small
+                                    elide: Text.ElideRight
+                                    horizontalAlignment: Text.AlignRight
+                                }
+
+                                StyledText {
+                                    Layout.alignment: Qt.AlignRight
+                                    text: qsTr("%1 / %2").arg(VPN.bytesIn || "—").arg(VPN.bytesOut || "—")
+                                    color: Colours.palette.m3outline
+                                    font: Tokens.font.label.small
+                                    elide: Text.ElideRight
+                                    horizontalAlignment: Text.AlignRight
+                                }
+                            }
+
+                            ColumnLayout {
+                                spacing: 0
 
                                 StyledText {
                                     Layout.alignment: Qt.AlignRight

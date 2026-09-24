@@ -25,6 +25,8 @@ Singleton {
         FloatingWindow {
             id: win
 
+            property alias initialPageIdx: nexus.initialPageIdx
+
             color: Colours.tPalette.m3surface
             surfaceFormat.opaque: false
 

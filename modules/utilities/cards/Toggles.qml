@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell.Bluetooth
 import Caelestia.Components
@@ -84,6 +85,7 @@ StyledRect {
                     delegate: Toggle {
                         icon: "wifi"
                         checked: Nmcli.wifiEnabled
+                        tooltip: checked ? qsTr("Wi-Fi: On") : qsTr("Wi-Fi: Off")
                         onClicked: Nmcli.toggleWifi()
                     }
                 }
@@ -92,6 +94,7 @@ StyledRect {
                     delegate: Toggle {
                         icon: "bluetooth"
                         checked: Bluetooth.defaultAdapter?.enabled ?? false // qmllint disable unresolved-type
+                        tooltip: checked ? qsTr("Bluetooth: On") : qsTr("Bluetooth: Off")
                         onClicked: {
                             const adapter = Bluetooth.defaultAdapter; // qmllint disable unresolved-type
                             if (adapter)
@@ -104,10 +107,21 @@ StyledRect {
                     delegate: Toggle {
                         icon: "mic"
                         checked: !Audio.sourceMuted
+                        tooltip: checked ? qsTr("Microphone: Unmuted") : qsTr("Microphone: Muted")
                         onClicked: {
                             const audio = Audio.source?.audio;
                             if (audio)
                                 audio.muted = !audio.muted;
+                        }
+
+                        WheelHandler {
+                            orientation: Qt.Vertical
+                            onWheel: event => {
+                                if (event.angleDelta.y > 0)
+                                    Audio.incrementSourceVolume();
+                                else if (event.angleDelta.y < 0)
+                                    Audio.decrementSourceVolume();
+                            }
                         }
                     }
                 }
@@ -117,6 +131,7 @@ StyledRect {
                         icon: "settings"
                         inactiveOnColour: Colours.palette.m3onSurfaceVariant
                         isToggle: false
+                        tooltip: qsTr("Open settings")
                         onClicked: {
                             root.screenState.utilities = false;
                             WindowFactory.create();
@@ -128,6 +143,7 @@ StyledRect {
                     delegate: Toggle {
                         icon: "gamepad"
                         checked: GameMode.enabled
+                        tooltip: checked ? qsTr("Game Mode: On") : qsTr("Game Mode: Off")
                         onClicked: GameMode.enabled = !GameMode.enabled
                     }
                 }
@@ -136,6 +152,7 @@ StyledRect {
                     delegate: Toggle {
                         icon: "notifications_off"
                         checked: Notifs.dnd
+                        tooltip: checked ? qsTr("Do Not Disturb: On") : qsTr("Do Not Disturb: Off")
                         onClicked: Notifs.dnd = !Notifs.dnd
                     }
                 }
@@ -147,7 +164,73 @@ StyledRect {
                         enabled: !VPN.connecting && !VPN.disconnecting
                         isToggle: VPN.status.state !== "needs-auth" && VPN.status.state !== "error"
                         inactiveOnColour: Colours.palette.m3onSurfaceVariant
+                        tooltip: VPN.connecting ? qsTr("VPN: Connecting…") : VPN.disconnecting ? qsTr("VPN: Disconnecting…") : checked ? qsTr("VPN: Connected") : qsTr("VPN: Disconnected")
                         onClicked: VPN.toggle()
+                    }
+                }
+                DelegateChoice {
+                    roleValue: "speaker"
+                    delegate: Toggle {
+                        icon: "volume_up"
+                        checked: !Audio.muted
+                        tooltip: Audio.muted ? qsTr("Speaker: Muted\nScroll to adjust volume") : qsTr("Speaker: %1%\nScroll to adjust volume").arg(Math.round(Audio.volume * 100))
+                        onClicked: {
+                            const audio = Audio.sink?.audio;
+                            if (audio)
+                                audio.muted = !audio.muted;
+                        }
+
+                        WheelHandler {
+                            orientation: Qt.Vertical
+                            onWheel: event => {
+                                if (event.angleDelta.y > 0)
+                                    Audio.incrementVolume();
+                                else if (event.angleDelta.y < 0)
+                                    Audio.decrementVolume();
+                            }
+                        }
+                    }
+                }
+                DelegateChoice {
+                    roleValue: "audioOutput"
+                    delegate: Toggle {
+                        icon: "speaker"
+                        inactiveOnColour: Colours.palette.m3onSurfaceVariant
+                        isToggle: false
+                        enabled: Audio.sinks.length > 1
+                        tooltip: {
+                            if (Audio.sinks.length <= 1)
+                                return qsTr("Output: %1").arg(Audio.sink?.description ?? qsTr("—"));
+                            const idx = Audio.sinks.findIndex(s => s === Audio.sink);
+                            const next = Audio.sinks[(idx + 1) % Audio.sinks.length];
+                            return qsTr("Output: %1\nScroll or click to switch → %2").arg(Audio.sink?.description ?? qsTr("—")).arg(next?.description ?? qsTr("—"));
+                        }
+                        onClicked: Audio.cycleNextAudioOutput()
+
+                        WheelHandler {
+                            orientation: Qt.Vertical
+                            onWheel: event => {
+                                if (event.angleDelta.y > 0)
+                                    Audio.cycleNextAudioOutput();
+                                else if (event.angleDelta.y < 0)
+                                    Audio.cyclePreviousAudioOutput();
+                            }
+                        }
+                    }
+                }
+                DelegateChoice {
+                    roleValue: "audioDevices"
+                    delegate: Toggle {
+                        icon: "tune"
+                        inactiveOnColour: Colours.palette.m3onSurfaceVariant
+                        isToggle: false
+                        tooltip: qsTr("Audio settings")
+                        onClicked: {
+                            root.screenState.utilities = false;
+                            WindowFactory.create(null, {
+                                initialPageIdx: 3 // Audio page, see PageRegistry.qml
+                            });
+                        }
                     }
                 }
             }
@@ -155,10 +238,18 @@ StyledRect {
     }
 
     component Toggle: IconButton {
+        id: toggle
+
+        property string tooltip: ""
+
         inactiveColour: Colours.layer(Colours.palette.m3surfaceContainerHighest, 2)
         fillWidth: true
         isToggle: true
         isRound: true
         shapeMorph: true
+
+        ToolTip.visible: toggle.tooltip.length > 0 && hovered
+        ToolTip.text: toggle.tooltip
+        ToolTip.delay: 500
     }
 }

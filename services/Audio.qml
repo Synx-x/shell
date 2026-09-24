@@ -78,6 +78,15 @@ Singleton {
         setAudioSink(sinks[nextIndex]);
     }
 
+    function cyclePreviousAudioOutput(): void {
+        if (sinks.length === 0)
+            return;
+
+        const currentIndex = sinks.findIndex(s => s === sink);
+        const prevIndex = (currentIndex - 1 + sinks.length) % sinks.length;
+        setAudioSink(sinks[prevIndex]);
+    }
+
     function setStreamVolume(stream: PwNode, newVolume: real): void {
         if (stream?.ready && stream?.audio) {
             stream.audio.muted = false;

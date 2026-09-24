@@ -16,6 +16,7 @@ Item {
 
         onClose: root.close()
     }
+    property alias initialPageIdx: nState.currentPageIdx
     property color blobColour: Colours.tPalette.m3surfaceContainerLow
 
     signal close

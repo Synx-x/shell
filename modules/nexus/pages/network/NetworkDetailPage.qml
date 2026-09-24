@@ -211,6 +211,13 @@ PageBase {
         }
 
         InfoRow {
+            icon: "wifi_tethering"
+            label: qsTr("Access point")
+            value: root.ap?.bssid || qsTr("—")
+            visible: root.isActive
+        }
+
+        InfoRow {
             icon: "graphic_eq"
             label: Tr.tr("Frequency")
             // TRANSLATORS: %1 = channel frequency; MHz is a unit, leave it untranslated
