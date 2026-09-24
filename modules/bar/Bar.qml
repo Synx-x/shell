@@ -199,9 +199,17 @@ GridLayout {
             DelegateChoice {
                 roleValue: "power"
                 delegate: EntryWrapper {
-                    Power {
-                        objectName: "taskbarPowerButton"
-                        screenState: root.screenState
+                    // Local: the game mode button rides in the power entry,
+                    // so it sits beside power without a new config entry.
+                    Row {
+                        spacing: Tokens.spacing.small
+
+                        GamingMode {}
+
+                        Power {
+                            objectName: "taskbarPowerButton"
+                            screenState: root.screenState
+                        }
                     }
                 }
             }
