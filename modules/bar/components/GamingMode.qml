@@ -5,21 +5,39 @@ import Caelestia.Config
 import qs.components
 import qs.services
 
-// Local: runs ~/.claude/scripts/gaming-mode.sh, which stops and records
+// Local: drives ~/.claude/scripts/gaming-mode.sh, which stops and records
 // services, docker and waydroid, pins the CPU governor and sweeps old
-// sessions (sparing ~/.config/gaming-mode/keep.txt). A second click undoes
-// it. The engine's state file tells the button whether game mode is on.
+// sessions (sparing ~/.config/gaming-mode/keep.txt).
+// Left click turns game mode on, or undoes it when it is on.
+// Right click runs the full pass again even when it is on, and also turns
+// on Caelestia's visual game mode, for the most free resources.
+// The engine runs in its own transient unit. Its memory reclaim restarts
+// this shell, which would otherwise kill it halfway.
 Item {
     id: root
 
     readonly property string engine: "/home/pc/.claude/scripts/gaming-mode.sh"
     readonly property string stateFile: "/home/pc/.claude/state/gaming-mode.state.json"
+    readonly property string unit: "gaming-mode-btn"
 
     property bool active: false
-    readonly property bool busy: run.running
+    property bool busy: false
 
     function refresh(): void {
         check.running = true;
+    }
+
+    function start(action: string): void {
+        if (busy)
+            return;
+        const scripts = {
+            on: `"${engine}" on && msg="Stopped background services and swept old sessions" || msg="gaming-mode.sh on failed"; notify-send -a "Game mode" -i input-gaming "Game mode on" "$msg"`,
+            full: `"${engine}" on; qs -c caelestia ipc call gameMode enable; notify-send -a "Game mode" -i input-gaming "Full cleanup done" "Swept, reclaimed memory and turned off animations and blur"`,
+            undo: `"${engine}" undo; qs -c caelestia ipc call gameMode disable; notify-send -a "Game mode" -i input-gaming "Game mode off" "Restored the services game mode stopped"`
+        };
+        busy = true;
+        run.command = ["systemd-run", "--user", "--collect", "--quiet", "--unit=" + unit, "sh", "-c", scripts[action]];
+        run.running = true;
     }
 
     implicitWidth: icon.implicitHeight + Tokens.padding.small
@@ -32,10 +50,13 @@ Item {
         implicitWidth: implicitHeight
         implicitHeight: icon.implicitHeight + Tokens.padding.small
         radius: Tokens.rounding.full
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
         disabled: root.busy
-        onClicked: {
-            run.command = [root.engine, root.active ? "undo" : "on"];
-            run.running = true;
+        onClicked: event => { // qmllint disable signal-handler-parameters
+            if (event.button === Qt.RightButton)
+                root.start("full");
+            else
+                root.start(root.active ? "undo" : "on");
         }
     }
 
@@ -64,29 +85,34 @@ Item {
     }
 
     Process {
-        id: check
-
-        command: ["test", "-f", root.stateFile]
-        onExited: code => root.active = code === 0 // qmllint disable signal-handler-parameters
-    }
-
-    Process {
         id: run
 
-        stdout: StdioCollector {}
         onExited: code => { // qmllint disable signal-handler-parameters
-            const turningOn = run.command[1] === "on";
+            // systemd-run refuses a second unit with the same name, so a
+            // failure here usually means a run is already going.
+            if (code !== 0)
+                Toaster.toast("Game mode is busy", "A game mode run is still going", "hourglass_top");
             root.refresh();
-            if (code === 0)
-                Toaster.toast(turningOn ? "Game mode on" : "Game mode off", turningOn ? "Stopped background services and swept old sessions" : "Restored the services game mode stopped", "sports_esports");
-            else
-                Toaster.toast("Game mode failed", "gaming-mode.sh exited with code " + code, "error");
         }
     }
 
-    // The engine can also run from a terminal, so poll the state file.
+    // Prints "<state file missing?> <unit not running?>", 0 meaning yes.
+    Process {
+        id: check
+
+        command: ["sh", "-c", `test -f "${root.stateFile}"; a=$?; systemctl --user --quiet is-active ${root.unit}.service; echo "$a $?"`]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const parts = text.trim().split(" ");
+                root.active = parts[0] === "0";
+                root.busy = parts[1] === "0";
+            }
+        }
+    }
+
+    // The engine can also run from a terminal, so poll.
     Timer {
-        interval: 5000
+        interval: 3000
         running: true
         repeat: true
         triggeredOnStart: true
