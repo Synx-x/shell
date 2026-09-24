@@ -36,11 +36,6 @@ StyledWindow {
         return hasFullscreenOnNormalWs;
     }
 
-    // Local: Steam's XWayland toasts ignore reserved zones and can't be
-    // moved by window rules, so they land under the bar. While one is open,
-    // drop the shell below windows so the toast shows over the bar.
-    readonly property bool hasSteamToast: Hypr.toplevels.values.some(t => /^notificationtoasts_.*_desktop$/.test(t.title ?? ""))
-
     property real fsTransitionProg: hasFullscreen ? 1 : 0
     readonly property real sdfBorderOffset: 2 * fsTransitionProg // SDFs joins are not exact, so offset by 2px to ensure nothing shows
     readonly property real borderThickness: contentItem.Config.border.thickness * (1 - fsTransitionProg)
@@ -73,7 +68,7 @@ StyledWindow {
 
     name: "drawers"
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.layer: hasSteamToast ? WlrLayer.Bottom : ((fsTransitionProg > 0 && contentItem.Config.general.showOverFullscreen) || (hasSpecialWorkspace && hasFullscreenOnNormalWs) ? WlrLayer.Overlay : WlrLayer.Top)
+    WlrLayershell.layer: (fsTransitionProg > 0 && contentItem.Config.general.showOverFullscreen) || (hasSpecialWorkspace && hasFullscreenOnNormalWs) ? WlrLayer.Overlay : WlrLayer.Top
     WlrLayershell.keyboardFocus: screenState.launcher || screenState.session ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
     mask: hasFullscreen ? emptyRegion : regions
