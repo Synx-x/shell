@@ -32,7 +32,7 @@ QtObject {
     // Local: with the bar on the bottom it floats as a pill, lifted off
     // the thin screen frame by floatGap and inset floatInset from each side.
     readonly property bool barFloating: barOnBottom
-    readonly property real floatGap: 10
+    readonly property real floatGap: 4
     readonly property real floatInset: 180
     readonly property bool dashboardOnLeft: !dashboardOnBottom && effectiveDashboardPosition === DashboardPosition.Left
     readonly property bool dashboardOnTop: !dashboardOnBottom && effectiveDashboardPosition === DashboardPosition.Top
