@@ -23,6 +23,40 @@ Item {
     property bool decodingHtml: false
     property bool imageLoadError: false
 
+    // Text preview: cliphist list only carries a flattened 100-char preview,
+    // so the full text is decoded on selection, capped at textByteCap bytes.
+    readonly property int textByteCap: 20000
+    property string fullText: ""
+    property bool loadingText: false
+    property bool textTruncated: false
+
+    readonly property bool isTextItem: {
+        const data = currentItem?.modelData;
+        return !!data && data.isImage !== true && data.hasImageUrl !== true;
+    }
+
+    readonly property var textLines: fullText === "" ? [] : fullText.replace(/\n+$/, "").split("\n")
+    readonly property int textMaxLineLength: textLines.reduce((m, l) => Math.max(m, l.length), 0)
+
+    // Short one-liners already read in full in the list row.
+    readonly property bool hasText: isTextItem && fullText !== "" && (textLines.length > 1 || fullText.length > 80)
+
+    // Share of visible characters that are not letters, digits or common
+    // punctuation. Braille, box drawing and block art score high, logs low.
+    readonly property real symbolRatio: {
+        const visible = fullText.replace(/\s/g, "");
+        if (visible.length === 0)
+            return 0;
+        const plain = visible.match(/[A-Za-z0-9.,:;'"!?()\[\]{}\-_\/\\@#$%&*+=<>|~`^]/g);
+        return 1 - (plain ? plain.length : 0) / visible.length;
+    }
+
+    // Art keeps its columns and shrinks to fit, so it stays aligned.
+    // Everything else wraps at a readable size.
+    readonly property bool asciiLayout: textLines.length > 1 && textMaxLineLength <= 240 && symbolRatio > 0.3
+
+    readonly property bool hasContent: hasImage || hasText
+
     readonly property bool hasImage: {
         if (!currentItem?.modelData || imageLoadError)
             return false;
@@ -48,8 +82,15 @@ Item {
     property real lastValidHeight: 0
 
     readonly property real targetHeight: {
-        if (!shouldShow || !hasImage) {
+        if (!shouldShow || !hasContent) {
             return 0;
+        }
+
+        if (hasText) {
+            const lineHeight = 17;
+            const chrome = Tokens.padding.medium * 2 + 28;
+            const rows = asciiLayout ? textLines.length : textLines.reduce((n, l) => n + Math.max(1, Math.ceil(l.length / 46)), 0);
+            return Math.max(140, Math.min(asciiLayout ? 520 : 420, rows * lineHeight + chrome));
         }
 
         if (previewImage.status === Image.Ready && previewImage.sourceSize.height > 0) {
@@ -73,6 +114,15 @@ Item {
         decodeProcess.running = true;
     }
 
+    function decodeText(): void {
+        if (!isTextItem)
+            return;
+        const id = String(currentItem.modelData.id);
+        decodeTextProcess.requestedId = id;
+        decodeTextProcess.command = ["sh", "-c", "cliphist decode \"$1\" | head -c \"$2\"", "sh", id, String(textByteCap + 1)];
+        decodeTextProcess.running = true;
+    }
+
     function decodeHtmlForImageUrl(): void {
         if (!currentItem?.modelData?.needsDecodeForUrl)
             return;
@@ -80,11 +130,11 @@ Item {
         decodeHtmlProcess.running = true;
     }
 
-    width: 400
+    width: hasText ? 480 : 400
 
     height: targetHeight
 
-    enabled: shouldShow && hasImage
+    enabled: shouldShow && hasContent
 
     visible: height > (rounding * 2)
 
@@ -102,6 +152,9 @@ Item {
         extractedImageUrl = "";
         imageLoadError = false;
         decodingHtml = false;
+        fullText = "";
+        textTruncated = false;
+        loadingText = false;
 
         if (currentItem && currentItem.modelData) {
             const data = currentItem.modelData;
@@ -113,6 +166,9 @@ Item {
                 decodeHtmlForImageUrl();
             } else if (data.imageUrl) {
                 extractedImageUrl = data.imageUrl;
+            } else if (isTextItem) {
+                loadingText = true;
+                decodeText();
             }
         }
     }
@@ -128,6 +184,25 @@ Item {
                     root.imageDataUrl = "data:image/png;base64," + b64;
             }
             root.loadingImage = false;
+        }
+    }
+
+    Process {
+        id: decodeTextProcess
+
+        property string requestedId: ""
+
+        stdout: StdioCollector {}
+        onExited: { // qmllint disable signal-handler-parameters
+            // Drop a result that lands after the selection moved on.
+            if (String(root.currentItem?.modelData?.id) !== requestedId)
+                return;
+            let text = String(stdout.text); // qmllint disable missing-property
+            root.textTruncated = text.length > root.textByteCap;
+            if (root.textTruncated)
+                text = text.substring(0, root.textByteCap);
+            root.fullText = text;
+            root.loadingText = false;
         }
     }
 
@@ -173,10 +248,54 @@ Item {
         spacing: 0
 
         Item {
+            id: textContainer
+
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            visible: root.hasText
+            clip: true
+
+            StyledText {
+                id: previewText
+
+                anchors.fill: parent
+                text: root.fullText
+                font: Tokens.font.mono.small
+                color: Colours.palette.m3onSurface
+                verticalAlignment: Text.AlignTop
+                wrapMode: root.asciiLayout ? Text.NoWrap : Text.WrapAtWordBoundaryOrAnywhere
+                fontSizeMode: root.asciiLayout ? Text.Fit : Text.FixedSize
+                minimumPointSize: 5
+                opacity: root.shouldShow && root.hasText ? 1 : 0
+
+                Behavior on opacity {
+                    Anim {
+                        duration: Tokens.anim.durations.small
+                        easing: Tokens.anim.standard
+                    }
+                }
+            }
+        }
+
+        StyledText {
+            Layout.fillWidth: true
+            Layout.topMargin: Tokens.padding.small
+            visible: root.hasText
+            text: {
+                const lines = root.textLines.length;
+                const chars = root.fullText.length.toLocaleString(Qt.locale(), "f", 0);
+                return `${lines} line${lines !== 1 ? "s" : ""} · ${chars}${root.textTruncated ? "+" : ""} chars`;
+            }
+            color: Colours.palette.m3onSurfaceVariant
+            elide: Text.ElideRight
+        }
+
+        Item {
             id: imageContainer
 
             Layout.fillWidth: true
             Layout.fillHeight: true
+            visible: !root.hasText
 
             property string pendingSource: ""
 
