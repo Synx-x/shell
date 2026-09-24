@@ -40,6 +40,8 @@ Copies of these live in `synx/config/`. Put each one back at its path to rebuild
 | `shell.json` | `~/.config/caelestia/shell.json` | Bar on top, 150% volume cap, Celsius. Add your own `weatherLocation`. |
 | `monitors/caelestia-bar/` | `~/.config/caelestia/monitors/caelestia-bar/` | Bar-only scale. Change `innerWidth` in `shell-tokens.json` to resize the bar. |
 | `hypr/keybinds.conf` | `~/.config/hypr/source/keybinds.conf` | Super+V opens `$cae launcher clipboard`. |
+| `hypr/appearance.conf` | `~/.config/hypr/source/appearance.conf` | Window opacity: 90% focused, 75% unfocused. |
+| `scripts/hypr_blur_opacity_shadow_toggle.sh` | `~/user_scripts/hypr/hypr_blur_opacity_shadow_toggle.sh` | Super+Alt+. effects toggle, restoring 90%/75%. |
 | `scripts/active_output_volume.sh` | `~/user_scripts/audio/active_output_volume.sh` | Volume keys through swayosd, with `--max-volume 150`. |
 | `systemd/caelestia-release-check.*` | `~/.config/systemd/user/` | Weekly `caelestia-update --check`. Run `systemctl --user enable --now caelestia-release-check.timer`. |
 | `pacman/ignorepkg.conf` | `/etc/pacman.conf`, `[options]` section | Stops paru replacing this build. |
