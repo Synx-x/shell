@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Widgets
 import M3Shapes
 import Caelestia.Components
 import Caelestia.Config
@@ -236,17 +237,42 @@ Item {
                 }
             }
 
-            delegate: MaterialIcon {
+            delegate: Item {
                 id: win
 
                 required property var modelData
                 required property int index // Needed, LazyListView will fail to set it if it doesn't exist
 
-                grade: 0
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Qt.AlignVCenter
-                text: Icons.getAppCategoryIcon(modelData.lastIpcObject.class, "terminal")
-                color: root.onOtherMonitor ? root.offMonitorColour : Colours.palette.m3onSurfaceVariant
+                readonly property string appClass: modelData.lastIpcObject.class ?? ""
+                readonly property string iconSource: {
+                    const icon = DesktopEntries.heuristicLookup(appClass)?.icon;
+                    return icon ? Quickshell.iconPath(icon, true) : "";
+                }
+                readonly property real iconSize: glyph.implicitHeight
+
+                implicitWidth: glyph.implicitWidth
+                implicitHeight: glyph.implicitHeight
+
+                IconImage {
+                    anchors.centerIn: parent
+                    visible: win.iconSource !== ""
+                    asynchronous: true
+                    implicitSize: win.iconSize
+                    source: win.iconSource
+                    opacity: root.onOtherMonitor ? 0.5 : 1
+                }
+
+                MaterialIcon {
+                    id: glyph
+
+                    anchors.centerIn: parent
+                    visible: win.iconSource === ""
+                    grade: 0
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Qt.AlignVCenter
+                    text: Icons.getAppCategoryIcon(win.appClass, "terminal")
+                    color: root.onOtherMonitor ? root.offMonitorColour : Colours.palette.m3onSurfaceVariant
+                }
 
                 opacity: LazyListView.adding || LazyListView.removing ? 0 : 1
 
