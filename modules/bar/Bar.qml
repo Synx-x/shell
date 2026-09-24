@@ -34,7 +34,9 @@ GridLayout {
     }
 
     function axisCenterOf(item: Item): real {
-        const c = item.mapToItem(root, item.implicitWidth / 2, item.implicitHeight / 2);
+        // Local: map to the window, not the bar, so popouts stay centred on
+        // their icon when the bar is inset (the floating pill).
+        const c = item.mapToItem(null, item.implicitWidth / 2, item.implicitHeight / 2);
         return horizontal ? c.x : c.y;
     }
 

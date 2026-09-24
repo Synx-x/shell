@@ -66,6 +66,8 @@ QtObject {
         const extent = clamped ? barClamped : barExtent;
         if (barOnTop)
             return y < extent;
+        if (barFloating)
+            return y > win.height - extent - floatGap - win.borderThickness && x > floatInset && x < win.width - floatInset;
         if (barOnBottom)
             return y > win.height - extent;
         return x < extent;
@@ -80,6 +82,9 @@ QtObject {
     }
 
     function axisPos(x: real, y: real): real {
+        // Local: bar entries are laid out from the pill's left edge.
+        if (barFloating)
+            return x - floatInset;
         return horizontal ? x : y;
     }
 }
