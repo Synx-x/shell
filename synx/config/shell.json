@@ -6,7 +6,15 @@
     },
     "bar": {
         "persistent": true,
-        "position": "Bottom"
+        "position": "Bottom",
+        "workspaces": {
+            "windowIconScales": [
+                {
+                    "name": "dota2",
+                    "scale": 1.25
+                }
+            ]
+        }
     },
     "border": {
         "rounding": 5,
