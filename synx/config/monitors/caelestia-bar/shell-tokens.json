@@ -1,5 +1,7 @@
 {
     "sizes": {
-        "bar": { "innerWidth": 33 }
+        "bar": {
+            "innerWidth": 30
+        }
     }
 }
