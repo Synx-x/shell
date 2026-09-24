@@ -1,0 +1,6 @@
+[Unit]
+Description=Check for a new caelestia-shell release
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/caelestia-update --check

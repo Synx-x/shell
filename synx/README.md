@@ -33,10 +33,17 @@ notification when a new release is out.
 
 ## Files outside the package
 
-- `synx/config/monitors/caelestia-bar/` goes to `~/.config/caelestia/monitors/caelestia-bar/`.
-  It sets the bar-only scale. Change `innerWidth` in `shell-tokens.json` to resize the bar.
-- `synx/udev/99-caelestia-battery.rules` gives the `wheel` group write access to the battery charge limit.
-  PR #1908 ships a rule that makes the file writable by all users. This rule replaces it.
-- `~/.config/hypr/source/keybinds.conf` binds Super+V to `$cae launcher clipboard`.
-- `~/.config/caelestia/shell.json` sets `services.maxVolume` to 1.5.
-- `~/user_scripts/audio/active_output_volume.sh` passes `--max-volume 150` to swayosd, which handles the volume keys.
+Copies of these live in `synx/config/`. Put each one back at its path to rebuild this setup on a new machine.
+
+| Copy in `synx/config/` | Goes to | What it sets |
+| --- | --- | --- |
+| `shell.json` | `~/.config/caelestia/shell.json` | Bar on top, 150% volume cap, Celsius. Add your own `weatherLocation`. |
+| `monitors/caelestia-bar/` | `~/.config/caelestia/monitors/caelestia-bar/` | Bar-only scale. Change `innerWidth` in `shell-tokens.json` to resize the bar. |
+| `hypr/keybinds.conf` | `~/.config/hypr/source/keybinds.conf` | Super+V opens `$cae launcher clipboard`. |
+| `scripts/active_output_volume.sh` | `~/user_scripts/audio/active_output_volume.sh` | Volume keys through swayosd, with `--max-volume 150`. |
+| `systemd/caelestia-release-check.*` | `~/.config/systemd/user/` | Weekly `caelestia-update --check`. Run `systemctl --user enable --now caelestia-release-check.timer`. |
+| `pacman/ignorepkg.conf` | `/etc/pacman.conf`, `[options]` section | Stops paru replacing this build. |
+
+`caelestia-update` installs `synx/udev/99-caelestia-battery.rules` to `/etc/udev/rules.d/`.
+That rule gives the `wheel` group write access to the battery charge limit.
+PR #1908 ships a rule that makes the file writable by all users. This rule replaces it.

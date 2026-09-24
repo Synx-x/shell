@@ -1,0 +1,73 @@
+{
+    "appearance": {
+        "transparency": {
+            "enabled": true
+        }
+    },
+    "bar": {
+        "persistent": true,
+        "position": "Top"
+    },
+    "border": {
+        "rounding": 5,
+        "thickness": 1
+    },
+    "general": {
+        "apps": {
+            "explorer": [
+                "apostrophe"
+            ]
+        },
+        "idle": {
+            "timeouts": []
+        }
+    },
+    "services": {
+        "maxVolume": 1.5,
+        "weatherUnits": "Celsius"
+    },
+    "utilities": {
+        "quickToggles": [
+            {
+                "enabled": true,
+                "id": "wifi"
+            },
+            {
+                "enabled": true,
+                "id": "bluetooth"
+            },
+            {
+                "enabled": true,
+                "id": "mic"
+            },
+            {
+                "enabled": true,
+                "id": "speaker"
+            },
+            {
+                "enabled": true,
+                "id": "audioOutput"
+            },
+            {
+                "enabled": true,
+                "id": "audioDevices"
+            },
+            {
+                "enabled": true,
+                "id": "settings"
+            },
+            {
+                "enabled": true,
+                "id": "gameMode"
+            },
+            {
+                "enabled": true,
+                "id": "dnd"
+            },
+            {
+                "enabled": false,
+                "id": "vpn"
+            }
+        ]
+    }
+}
