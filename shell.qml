@@ -9,6 +9,7 @@ import "modules/drawers"
 import "modules/background"
 import "modules/areapicker"
 import "modules/lock"
+import "modules/usb"
 import QtQuick
 import Quickshell
 import qs.services
@@ -38,5 +39,13 @@ ShellRoot {
     BatteryMonitor {}
     IdleMonitors {
         lock: lock
+    }
+
+    UsbService {
+        id: usbService
+    }
+
+    UsbToast {
+        usbService: usbService
     }
 }
