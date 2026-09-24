@@ -6,7 +6,7 @@
     },
     "bar": {
         "persistent": true,
-        "position": "Top"
+        "position": "Bottom"
     },
     "border": {
         "rounding": 5,
