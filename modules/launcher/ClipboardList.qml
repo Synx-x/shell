@@ -179,9 +179,7 @@ Item {
                             implicitHeight: tabContent.height + Tokens.padding.small * 2
 
                             StateLayer {
-                                function onClicked(): void {
-                                    root.activeCategory = categoryTab.modelData.id;
-                                }
+                                onClicked: root.activeCategory = categoryTab.modelData.id
 
                                 anchors.fill: parent
                                 radius: 6
