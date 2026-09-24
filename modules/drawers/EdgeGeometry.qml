@@ -28,6 +28,12 @@ QtObject {
     // Local: with the bar on top, the dashboard opens from the bottom centre.
     // The launcher then opens from its keybind only, since it shares that edge.
     readonly property bool dashboardOnBottom: barOnTop
+
+    // Local: with the bar on the bottom it floats as a pill, lifted off
+    // the thin screen frame by floatGap and inset floatInset from each side.
+    readonly property bool barFloating: barOnBottom
+    readonly property real floatGap: 10
+    readonly property real floatInset: 180
     readonly property bool dashboardOnLeft: !dashboardOnBottom && effectiveDashboardPosition === DashboardPosition.Left
     readonly property bool dashboardOnTop: !dashboardOnBottom && effectiveDashboardPosition === DashboardPosition.Top
 
@@ -51,6 +57,8 @@ QtObject {
     }
 
     function insetBottom(border: real, clamped = false): real {
+        if (barFloating)
+            return (clamped ? barClamped : barExtent) + floatGap + border;
         return barOnBottom ? (clamped ? barClamped : barExtent) : border;
     }
 

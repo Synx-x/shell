@@ -181,7 +181,26 @@ StyledWindow {
             borderLeft: geometry.insetLeft(root.borderThickness) - anchors.margins - root.sdfBorderOffset
             borderRight: root.borderThickness - anchors.margins - root.sdfBorderOffset
             borderTop: geometry.insetTop(root.borderThickness) - anchors.margins - root.sdfBorderOffset
-            borderBottom: geometry.insetBottom(root.borderThickness) - anchors.margins - root.sdfBorderOffset
+            borderBottom: (geometry.barFloating ? root.borderThickness : geometry.insetBottom(root.borderThickness)) - anchors.margins - root.sdfBorderOffset
+        }
+
+        // Local: the floating bar pill. Its own group keeps the frame's
+        // smoothing from melting it into the screen edge below.
+        BlobGroup {
+            id: barBlobGroup
+
+            color: root.surfaceColour
+            smoothing: root.contentItem.Config.border.smoothing
+        }
+
+        BlobRect {
+            group: barBlobGroup
+            visible: geometry.barFloating && bar.extent > root.contentItem.Config.border.thickness
+            x: geometry.floatInset
+            y: root.height - root.borderThickness - geometry.floatGap - bar.extent
+            implicitWidth: root.width - geometry.floatInset * 2
+            implicitHeight: bar.extent
+            radius: bar.extent / 2
         }
 
         PanelBg {
@@ -322,10 +341,10 @@ StyledWindow {
         BarWrapper {
             id: bar
 
-            x: 0
-            y: geometry.barOnBottom ? parent.height - height : 0
+            x: geometry.barFloating ? geometry.floatInset : 0
+            y: geometry.barOnBottom ? parent.height - height - (geometry.barFloating ? root.borderThickness + geometry.floatGap : 0) : 0
 
-            width: geometry.horizontal ? parent.width : implicitWidth
+            width: geometry.barFloating ? parent.width - geometry.floatInset * 2 : geometry.horizontal ? parent.width : implicitWidth
             height: geometry.horizontal ? implicitHeight : parent.height
 
             screen: root.screen
