@@ -326,6 +326,14 @@ StyledWindow {
             position: geometry.position
 
             fullscreen: root.hasFullscreen
+
+            // Bar-only scale. Reads ~/.config/caelestia/monitors/caelestia-bar/{shell,shell-tokens}.json.
+            // Re-assert after the window propagates its real screen name down the tree.
+            Tokens.screen: "caelestia-bar"
+            Tokens.onSourceChanged: {
+                if (Tokens.screen !== "caelestia-bar")
+                    Tokens.screen = "caelestia-bar";
+            }
         }
     }
 
