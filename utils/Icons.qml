@@ -147,6 +147,24 @@ Singleton {
         return Quickshell.iconPath(icon);
     }
 
+    /**
+     * Returns the size factor for an app's icon, from the first matching
+     * bar.workspaces.windowIconScales rule. Returns 1 when no rule matches.
+     */
+    function getAppIconScale(name: string): real {
+        const rules = GlobalConfig.bar.workspaces.windowIconScales;
+        if (!rules || !name)
+            return 1;
+
+        for (const rule of rules.values) {
+            const matches = rule.regex ? new RegExp(rule.regex, rule.flags ?? "").test(name) : rule.name === name;
+            if (matches && rule.scale > 0)
+                return rule.scale;
+        }
+
+        return 1;
+    }
+
     function getAppCategoryIcon(name: string, fallback: string): string {
         const match = matchIconRuleList(name, GlobalConfig.bar.workspaces.windowIcons);
         if (match)

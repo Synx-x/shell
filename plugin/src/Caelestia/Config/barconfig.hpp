@@ -29,6 +29,16 @@ class BarPopouts : public settings::ObjectNode {
     CONFIG_PROPERTY(bool, statusIcons, true)
 };
 
+class BarIconScaleRule : public settings::ObjectNode {
+    CONFIG_NODE(BarIconScaleRule, settings::ObjectNode)
+
+    CONFIG_PROPERTY(QString, name, {})
+    CONFIG_PROPERTY(QString, regex, {})
+    CONFIG_PROPERTY(QString, flags, {})
+    CONFIG_PROPERTY(qreal, scale, 1)
+};
+CONFIG_LIST_TYPE(BarIconScaleRule, BarIconScaleRuleList)
+
 class BarWorkspaces : public settings::ObjectNode {
     CONFIG_NODE(BarWorkspaces, settings::ObjectNode)
 
@@ -65,6 +75,7 @@ class BarWorkspaces : public settings::ObjectNode {
         DEFAULT_ARG({
             ICON_RULE_REGEX("steam(_app_(default|[0-9]+))?", "", "sports_esports"),
         }))
+    CONFIG_GLOBAL_LIST(BarIconScaleRuleList, windowIconScales, {})
 };
 
 class BarActiveWindow : public settings::ObjectNode {

@@ -77,20 +77,22 @@ Item {
 
         animate: true
         text: Icons.getAppCategoryIcon(Hypr.activeToplevel?.lastIpcObject.class, "desktop_windows")
-        color: root.colour
-        opacity: root.appIconSource ? 0 : 1
+        width: Math.max(implicitWidth, root.appIconSize)
+        // Hide with colour, not opacity: StyledText animates opacity on text change
+        color: root.appIconSource ? "transparent" : root.colour
     }
 
     readonly property string appIconSource: {
         const icon = DesktopEntries.heuristicLookup(Hypr.activeToplevel?.lastIpcObject.class ?? "")?.icon;
         return icon ? Quickshell.iconPath(icon, true) : "";
     }
+    readonly property real appIconSize: appIconSource ? icon.implicitHeight * Icons.getAppIconScale(Hypr.activeToplevel?.lastIpcObject.class ?? "") : 0
 
     IconImage {
         anchors.centerIn: icon
         visible: root.appIconSource !== ""
         asynchronous: true
-        implicitSize: icon.implicitHeight
+        implicitSize: root.appIconSize
         source: root.appIconSource
     }
 
