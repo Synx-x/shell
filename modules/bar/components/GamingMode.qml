@@ -9,8 +9,7 @@ import qs.services
 // services, docker and waydroid, pins the CPU governor and sweeps old
 // sessions (sparing ~/.config/gaming-mode/keep.txt).
 // Left click turns game mode on, or undoes it when it is on.
-// Right click runs the full pass again even when it is on, and also turns
-// on Caelestia's visual game mode, for the most free resources.
+// Right click runs the full pass again even when it is on.
 // The engine runs in its own transient unit. Its memory reclaim restarts
 // this shell, which would otherwise kill it halfway.
 Item {
@@ -32,8 +31,8 @@ Item {
             return;
         const scripts = {
             on: `"${engine}" on && msg="Stopped background services and swept old sessions" || msg="gaming-mode.sh on failed"; notify-send -a "Game mode" -i input-gaming "Game mode on" "$msg"`,
-            full: `"${engine}" on; qs -c caelestia ipc call gameMode enable; notify-send -a "Game mode" -i input-gaming "Full cleanup done" "Swept, reclaimed memory and turned off animations and blur"`,
-            undo: `"${engine}" undo; qs -c caelestia ipc call gameMode disable; notify-send -a "Game mode" -i input-gaming "Game mode off" "Restored the services game mode stopped"`
+            full: `"${engine}" on; notify-send -a "Game mode" -i input-gaming "Full cleanup done" "Stopped services, swept old sessions and reclaimed memory"`,
+            undo: `"${engine}" undo; notify-send -a "Game mode" -i input-gaming "Game mode off" "Restored the services game mode stopped"`
         };
         busy = true;
         run.command = ["systemd-run", "--user", "--collect", "--quiet", "--unit=" + unit, "sh", "-c", scripts[action]];
