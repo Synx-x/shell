@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# Merge the latest Caelestia release into the Synx-x/shell custom branch, then build and install it.
+# Use --check to only report whether a newer release exists.
+set -euo pipefail
+
+UPSTREAM="https://github.com/caelestia-dots/shell.git"
+FORK="https://github.com/Synx-x/shell.git"
+BRANCH="custom"
+WORK="$HOME/.cache/caelestia-build"
+SRC="$WORK/src"
+PKGS="$HOME/.cache/caelestia-pkgs"
+
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=$XDG_RUNTIME_DIR/bus}"
+
+notify() {
+    notify-send -a caelestia-update "Caelestia update" "$1" 2>/dev/null || true
+    echo "$1"
+}
+
+g() {
+    git -C "$SRC" -c user.name=Synx-x -c user.email=Siyanda@arksoft.co.za "$@"
+}
+
+if [ ! -d "$SRC/.git" ]
+then
+    mkdir -p "$WORK"
+    git clone -q -o fork -b "$BRANCH" "$FORK" "$SRC"
+    g remote add origin "$UPSTREAM"
+fi
+g fetch -q fork
+g fetch -q --tags origin
+TAG="$(g tag -l 'v*' --sort=-v:refname | head -n1)"
+
+if [ "${1:-}" = "--check" ]
+then
+    if g merge-base --is-ancestor "$TAG" "fork/$BRANCH"
+    then
+        echo "Up to date: $BRANCH already contains $TAG."
+    else
+        notify "Caelestia $TAG is out. Run caelestia-update to merge it into your custom build."
+    fi
+    exit 0
+fi
+
+g checkout -q "$BRANCH"
+g merge -q --ff-only "fork/$BRANCH"
+
+if ! g merge-base --is-ancestor "$TAG" HEAD
+then
+    if ! g merge -q --no-edit -m "Merge upstream $TAG" "$TAG"
+    then
+        FILES="$(g diff --name-only --diff-filter=U | tr '\n' ' ')"
+        g merge --abort
+        notify "Merging $TAG conflicts in: $FILES. Nothing changed. Resolve it in $SRC on branch $BRANCH, then rerun."
+        exit 1
+    fi
+fi
+
+REV="$(g rev-parse --short HEAD)"
+VER="${TAG#v}"
+AUR="$WORK/aur"
+if [ ! -d "$AUR/.git" ]
+then
+    git clone -q https://aur.archlinux.org/caelestia-shell.git "$AUR"
+fi
+git -C "$AUR" pull -q
+
+# Reuse the AUR dependency list, but build from the custom branch.
+BUILD="$WORK/pkg"
+mkdir -p "$BUILD" "$PKGS"
+sed -e "s/^pkgver=.*/pkgver=$VER.synx.$REV/" \
+    -e 's|^source=.*|source=()|' -e 's|^sha256sums=.*|sha256sums=()|' \
+    -e "s|cd \"\${srcdir}/\${_pkg}\"|cd \"$SRC\"|" \
+    -e "s|-DVERSION=\$pkgver|-DVERSION=$VER|" \
+    -e "s|-DGIT_REVISION=\"\$(cat REVISION)\"|-DGIT_REVISION=$REV|" \
+    -e "s|DISTRIBUTOR=\"AUR (package: \${pkgname})\"|DISTRIBUTOR=\"Synx-x/shell $BRANCH\"|" \
+    "$AUR/PKGBUILD" > "$BUILD/PKGBUILD"
+
+rm -rf "$SRC/build"
+(cd "$BUILD" && makepkg -fd --noconfirm)
+PKG_FILE="$(find "$BUILD" -maxdepth 1 -name "caelestia-shell-$VER.synx.$REV-*-x86_64.pkg.tar.zst" ! -name '*debug*' | head -n1)"
+cp "$PKG_FILE" "$PKGS/"
+
+if [ -n "${CAEL_NO_INSTALL:-}" ]
+then
+    echo "Built $PKGS/$(basename "$PKG_FILE") and did not install it."
+    exit 0
+fi
+
+sudo pacman -U --noconfirm "$PKGS/$(basename "$PKG_FILE")"
+sudo install -Dm644 "$SRC/synx/udev/99-caelestia-battery.rules" /etc/udev/rules.d/99-caelestia-battery.rules
+sudo udevadm control --reload
+sudo udevadm trigger --subsystem-match=power_supply
+
+mkdir -p "$HOME/.config/caelestia/monitors/caelestia-bar"
+cp -n "$SRC"/synx/config/monitors/caelestia-bar/*.json "$HOME/.config/caelestia/monitors/caelestia-bar/"
+
+g push -q fork "$BRANCH"
+systemctl --user restart caelestia-shell.service
+notify "Installed caelestia-shell $VER.synx.$REV and pushed $BRANCH to Synx-x/shell."
