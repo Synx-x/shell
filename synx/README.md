@@ -37,7 +37,7 @@ Copies of these live in `synx/config/`. Put each one back at its path to rebuild
 
 | Copy in `synx/config/` | Goes to | What it sets |
 | --- | --- | --- |
-| `shell.json` | `~/.config/caelestia/shell.json` | Bar on the bottom with the dashboard on top, 150% volume cap, Celsius. Add your own `weatherLocation`. |
+| `shell.json` | `~/.config/caelestia/shell.json` | Bar on the bottom with the dashboard on top, background visualiser on, 150% volume cap, Celsius. Add your own `weatherLocation`. |
 | `monitors/caelestia-bar/` | `~/.config/caelestia/monitors/caelestia-bar/` | Bar-only scale. Change `innerWidth` in `shell-tokens.json` to resize the bar. |
 | `hypr/` | `~/.config/hypr/` | Full Hyprland config: keybinds (Super+V opens `$cae launcher clipboard`), window rules, monitors, input, autostart, animations. |
 | `hypr/source/appearance.conf` | `~/.config/hypr/source/appearance.conf` | Window opacity: 90% focused, 75% unfocused. |
