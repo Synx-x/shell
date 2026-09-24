@@ -1,0 +1,9 @@
+#!/bin/sh
+# Ctrl+V in kitty. An image on the clipboard goes to the app as a raw
+# Ctrl+V so Claude Code and Codex read it themselves. Anything else is
+# pasted as text, which keeps Codex from treating a link as an image.
+if wl-paste --list-types 2>/dev/null | grep -q '^image/'; then
+    exec kitten @ send-key ctrl+v
+else
+    exec kitten @ action paste_from_clipboard
+fi

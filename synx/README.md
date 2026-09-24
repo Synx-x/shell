@@ -45,6 +45,8 @@ Copies of these live in `synx/config/`. Put each one back at its path to rebuild
 | `scripts/active_output_volume.sh` | `~/user_scripts/audio/active_output_volume.sh` | Volume keys through swayosd, with `--max-volume 150`. |
 | `systemd/caelestia-release-check.*` | `~/.config/systemd/user/` | Weekly `caelestia-update --check`. Run `systemctl --user enable --now caelestia-release-check.timer`. |
 | `pacman/ignorepkg.conf` | `/etc/pacman.conf`, `[options]` section | Stops paru replacing this build. |
+| `kitty/kitty.conf` | `~/.config/kitty/kitty.conf` | Ctrl+V runs `kitty-smart-paste`. |
+| `bin/kitty-smart-paste` | `~/.local/bin/kitty-smart-paste` | Passes Ctrl+V through for images, pastes text directly. |
 
 `hypr/scheme/current.conf` is not copied. Caelestia regenerates it from the wallpaper.
 
