@@ -97,8 +97,31 @@ Item {
                 anchors.right: parent.right
                 implicitHeight: parent.implicitHeight
 
+                to: GlobalConfig.services.maxVolume
                 value: Audio.volume
                 onInteraction: value => Audio.setVolume(value)
+            }
+        }
+
+        // Local port of PR #1113: quick switch between a 100% and 150% volume cap.
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.topMargin: Tokens.spacing.small
+            spacing: Tokens.spacing.medium
+
+            StyledText {
+                Layout.fillWidth: true
+                text: Tr.tr("Allow 150% volume")
+                font: Tokens.font.body.medium
+            }
+
+            StyledSwitch {
+                checked: GlobalConfig.services.maxVolume > 1
+                onToggled: {
+                    GlobalConfig.services.maxVolume = checked ? 1.5 : 1;
+                    if (!checked && Audio.volume > 1)
+                        Audio.setVolume(1);
+                }
             }
         }
 
