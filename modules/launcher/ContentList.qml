@@ -20,8 +20,10 @@ Item {
     required property int rounding
 
     readonly property bool showWallpapers: search.text.startsWith(`${GlobalConfig.launcher.actionPrefix}wallpaper `)
-    readonly property var currentList: showWallpapers ? wallpaperList.item : appList.item // Can be either ListView or PathView, so can't type properly
-    property string animState: showWallpapers ? "wallpapers" : "apps"
+    readonly property bool showClipboard: search.text.startsWith(`${GlobalConfig.launcher.actionPrefix}clipboard `)
+    readonly property bool showEmoji: search.text.startsWith(`${GlobalConfig.launcher.actionPrefix}emoji `)
+    readonly property var currentList: showWallpapers ? wallpaperList.item : showClipboard ? clipboardList.item : showEmoji ? emojiList.item : appList.item // Can be either ListView or PathView, so can't type properly
+    property string animState: showWallpapers ? "wallpapers" : showClipboard ? "clipboard" : showEmoji ? "emoji" : "apps"
 
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.bottom: parent.bottom
@@ -51,6 +53,24 @@ Item {
                 root.implicitWidth: Math.max(root.Tokens.sizes.launcher.itemWidth * 1.2, wallpaperList.implicitWidth)
                 root.implicitHeight: root.Tokens.sizes.launcher.wallpaperHeight
                 wallpaperList.active: true
+            }
+        },
+        State {
+            name: "clipboard"
+
+            PropertyChanges {
+                root.implicitWidth: root.Tokens.sizes.launcher.itemWidth
+                root.implicitHeight: Math.min(root.maxHeight, clipboardList.implicitHeight > 0 ? clipboardList.implicitHeight : empty.implicitHeight)
+                clipboardList.active: true
+            }
+        },
+        State {
+            name: "emoji"
+
+            PropertyChanges {
+                root.implicitWidth: root.Tokens.sizes.launcher.itemWidth
+                root.implicitHeight: Math.min(root.maxHeight, emojiList.implicitHeight > 0 ? emojiList.implicitHeight : empty.implicitHeight)
+                emojiList.active: true
             }
         }
     ]
@@ -110,10 +130,36 @@ Item {
         }
     }
 
+    Loader {
+        id: clipboardList
+
+        active: false
+
+        anchors.fill: parent
+
+        sourceComponent: ClipboardList {
+            search: root.search
+            screenState: root.screenState
+        }
+    }
+
+    Loader {
+        id: emojiList
+
+        active: false
+
+        anchors.fill: parent
+
+        sourceComponent: EmojiList {
+            search: root.search
+            screenState: root.screenState
+        }
+    }
+
     Row {
         id: empty
 
-        opacity: root.currentList?.count === 0 ? 1 : 0
+        opacity: root.currentList?.count === 0 && root.state !== "clipboard" ? 1 : 0
         scale: root.currentList?.count === 0 ? 1 : 0.5
 
         spacing: Tokens.spacing.medium

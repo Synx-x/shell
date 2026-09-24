@@ -35,6 +35,12 @@ Region {
     }
 
     R {
+        panel: root.panels.clipboardPreview
+        y: root.win.height - height
+        height: panel.visible ? panel.height + root.geometry.insetBottom(root.borderThickness) : 0
+    }
+
+    R {
         id: sessionRegion
 
         panel: root.panels.sessionWrapper

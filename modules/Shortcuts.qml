@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Caelestia
+import Caelestia.Config
 import qs.components.misc
 import qs.services
 import qs.modules.nexus
@@ -133,6 +134,35 @@ Scope {
         }
 
         target: "drawers"
+    }
+
+    // Launcher modes from PR #1298: `qs -c caelestia ipc call launcher clipboard` (or emoji).
+    IpcHandler {
+        function openMode(mode: string): void {
+            if (root.hasFullscreen)
+                return;
+
+            const text = `${GlobalConfig.launcher.actionPrefix}${mode} `;
+            const screenState = ShellState.forActive();
+            if (screenState.launcher && LauncherRequest.currentText === text) {
+                screenState.launcher = false;
+                return;
+            }
+
+            LauncherRequest.pendingText = text;
+            screenState.launcher = true;
+            LauncherRequest.requested();
+        }
+
+        function clipboard(): void {
+            openMode("clipboard");
+        }
+
+        function emoji(): void {
+            openMode("emoji");
+        }
+
+        target: "launcher"
     }
 
     IpcHandler {

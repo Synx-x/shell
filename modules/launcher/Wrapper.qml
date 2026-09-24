@@ -15,6 +15,17 @@ Item {
 
     readonly property bool shouldBeActive: screenState.launcher && Config.launcher.enabled
 
+    // Clipboard preview (PR #1298): the hovered item wins over the keyboard selection.
+    readonly property var currentClipboardItem: {
+        const list = content.item?.list?.currentList; // qmllint disable missing-property
+        if (!list)
+            return null;
+        if (list.lastInteraction === "hover" && list.hoveredItem)
+            return list.hoveredItem;
+        return list.currentItem;
+    }
+    readonly property bool showingClipboard: content.item?.list?.showClipboard ?? false // qmllint disable missing-property
+
     readonly property real maxHeight: {
         let max = screen.height - Config.border.thickness * 2 + Tokens.padding.extraLarge;
         if (screenState.dashboard)

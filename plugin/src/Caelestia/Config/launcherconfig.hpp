@@ -51,6 +51,8 @@ class LauncherConfig : public settings::ObjectNode {
     CONFIG_GLOBAL_PROPERTY(bool, vimKeybinds, false)
     CONFIG_GLOBAL_PROPERTY(QStringList, favouriteApps, {})
     CONFIG_GLOBAL_PROPERTY(QStringList, hiddenApps, {})
+    CONFIG_GLOBAL_PROPERTY(QStringList, pinnedClipboardItems, {})
+    CONFIG_GLOBAL_PROPERTY(QStringList, frequentEmojis, {})
     CONFIG_GLOBAL_SUBOBJECT(LauncherUseFuzzy, useFuzzy)
     CONFIG_GLOBAL_LIST(LauncherActionList, actions,
         DEFAULT_ARG({

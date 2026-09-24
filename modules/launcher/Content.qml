@@ -18,6 +18,8 @@ Item {
 
     readonly property int padding: Tokens.padding.large
     readonly property int rounding: Tokens.rounding.extraLarge
+    readonly property alias list: list
+    readonly property alias search: search
 
     implicitWidth: listWrapper.width + padding * 2
     implicitHeight: search.height + listWrapper.height + padding + search.anchors.bottomMargin
@@ -69,6 +71,12 @@ Item {
                         Wallpapers.previewColourLock = true;
                     Wallpapers.setWallpaper(currentItem.modelData.path);
                     root.screenState.launcher = false;
+                } else if (list.showClipboard) {
+                    Clipboard.copyToClipboard(currentItem.modelData);
+                    root.screenState.launcher = false;
+                } else if (list.showEmoji) {
+                    Emojis.copyEmoji(currentItem.modelData);
+                    root.screenState.launcher = false;
                 } else if (text.startsWith(GlobalConfig.launcher.actionPrefix)) {
                     if (text.startsWith(`${GlobalConfig.launcher.actionPrefix}calc `))
                         currentItem.onClicked();
@@ -83,6 +91,24 @@ Item {
 
         Keys.onUpPressed: list.currentList?.decrementCurrentIndex()
         Keys.onDownPressed: list.currentList?.incrementCurrentIndex()
+
+        Keys.onLeftPressed: event => {
+            if (list.showEmoji && list.currentList?.moveLeft) {
+                list.currentList.moveLeft();
+                event.accepted = true;
+            } else {
+                event.accepted = false;
+            }
+        }
+
+        Keys.onRightPressed: event => {
+            if (list.showEmoji && list.currentList?.moveRight) {
+                list.currentList.moveRight();
+                event.accepted = true;
+            } else {
+                event.accepted = false;
+            }
+        }
 
         Keys.onEscapePressed: root.screenState.launcher = false
 
@@ -107,7 +133,15 @@ Item {
             }
         }
 
-        Component.onCompleted: forceActiveFocus()
+        onTextChanged: LauncherRequest.currentText = text
+
+        Component.onCompleted: {
+            forceActiveFocus();
+            if (LauncherRequest.pendingText) {
+                text = LauncherRequest.pendingText;
+                LauncherRequest.pendingText = "";
+            }
+        }
 
         Connections {
             function onLauncherChanged(): void {
@@ -121,6 +155,17 @@ Item {
             }
 
             target: root.screenState
+        }
+
+        Connections {
+            function onRequested(): void {
+                if (root.screenState.launcher && LauncherRequest.pendingText) {
+                    search.text = LauncherRequest.pendingText;
+                    LauncherRequest.pendingText = "";
+                }
+            }
+
+            target: LauncherRequest
         }
     }
 }

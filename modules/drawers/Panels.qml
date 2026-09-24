@@ -29,6 +29,7 @@ Item {
     readonly property alias sessionWrapper: sessionWrapper
     readonly property alias launcher: launcher
     readonly property alias dashboard: dashboard
+    readonly property alias clipboardPreview: clipboardPreview
     readonly property alias popouts: popoutsWrapper.content
     readonly property alias popoutsWrapper: popoutsWrapper
     readonly property alias utilities: utilities
@@ -108,6 +109,17 @@ Item {
 
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
+    }
+
+    Launcher.ClipboardPreview {
+        id: clipboardPreview
+
+        currentItem: launcher.currentClipboardItem
+        shouldShow: root.screenState.launcher && launcher.showingClipboard && !root.screenState.utilities && !root.screenState.sidebar && clipboardPreview.hasImage
+
+        anchors.left: launcher.right
+        anchors.leftMargin: Tokens.spacing.largeIncreased
+        anchors.bottom: launcher.bottom
     }
 
     Dashboard.Wrapper {
