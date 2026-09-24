@@ -6,7 +6,7 @@ The `custom` branch is the latest Caelestia release plus these additions:
 - PR #1908: battery charge limit toggle in the battery popout.
 - VRAM usage on the GPU performance card.
 - The dashboard opens from the bottom centre when the bar is on top.
-- The bar reads its own token layer, so it can be 72% of normal size (40px tall).
+- The bar reads its own token layer, so it can be 76% of normal size (43px tall).
 - A 150% volume toggle in the audio popout, ported from PR #1113.
 - Free space on the root filesystem in the storage card.
 - USB connect and disconnect toasts, ported from PR #1204.
