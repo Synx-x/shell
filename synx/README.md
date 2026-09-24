@@ -38,3 +38,5 @@ notification when a new release is out.
 - `synx/udev/99-caelestia-battery.rules` gives the `wheel` group write access to the battery charge limit.
   PR #1908 ships a rule that makes the file writable by all users. This rule replaces it.
 - `~/.config/hypr/source/keybinds.conf` binds Super+V to `$cae launcher clipboard`.
+- `~/.config/caelestia/shell.json` sets `services.maxVolume` to 1.5.
+- `~/user_scripts/audio/active_output_volume.sh` passes `--max-volume 150` to swayosd, which handles the volume keys.

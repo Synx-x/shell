@@ -15,6 +15,7 @@ ConnectedRect {
     property alias label: label.text
     property alias valueLabel: valueLabel.text
     property real value
+    property real to: 1
 
     signal moved(value: real)
 
@@ -79,6 +80,7 @@ ConnectedRect {
                     implicitHeight: parent.implicitHeight
 
                     radius: Tokens.rounding.small
+                    to: root.to
                     value: root.value
                     enabled: root.enabled
                     onInteraction: v => root.moved(v)
