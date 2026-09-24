@@ -115,6 +115,7 @@ Item {
 
         screenState: root.screenState
         position: root.geometry.effectiveDashboardPosition
+        onBottom: root.geometry.dashboardOnBottom
     }
 
     BarPopouts.ClipWrapper {

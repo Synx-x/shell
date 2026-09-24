@@ -25,8 +25,11 @@ QtObject {
         return DashboardPosition.Top;
     }
 
-    readonly property bool dashboardOnLeft: effectiveDashboardPosition === DashboardPosition.Left
-    readonly property bool dashboardOnTop: effectiveDashboardPosition === DashboardPosition.Top
+    // Local: with the bar on top, the dashboard opens from the bottom centre.
+    // The launcher then opens from its keybind only, since it shares that edge.
+    readonly property bool dashboardOnBottom: barOnTop
+    readonly property bool dashboardOnLeft: !dashboardOnBottom && effectiveDashboardPosition === DashboardPosition.Left
+    readonly property bool dashboardOnTop: !dashboardOnBottom && effectiveDashboardPosition === DashboardPosition.Top
 
     readonly property real barExtent: bar.extent
     readonly property real barClamped: bar.clampedExtent

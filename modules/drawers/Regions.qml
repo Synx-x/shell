@@ -23,9 +23,9 @@ Region {
     R {
         panel: root.panels.dashboard
         x: root.geometry.dashboardOnLeft ? 0 : panel.x + root.geometry.insetLeft(root.borderThickness)
-        y: root.geometry.dashboardOnLeft ? panel.y + root.geometry.insetTop(root.borderThickness) : 0
+        y: root.geometry.dashboardOnBottom ? root.win.height - height : root.geometry.dashboardOnLeft ? panel.y + root.geometry.insetTop(root.borderThickness) : 0
         width: root.geometry.dashboardOnLeft ? panel.width * (1 - root.panels.dashboard.offsetScale) + root.geometry.insetLeft(root.borderThickness) : panel.width
-        height: root.geometry.dashboardOnLeft ? panel.height : panel.height * (1 - root.panels.dashboard.offsetScale) + root.geometry.insetTop(root.borderThickness)
+        height: root.geometry.dashboardOnLeft ? panel.height : panel.height * (1 - root.panels.dashboard.offsetScale) + (root.geometry.dashboardOnBottom ? root.geometry.insetBottom(root.borderThickness) : root.geometry.insetTop(root.borderThickness))
     }
 
     R {

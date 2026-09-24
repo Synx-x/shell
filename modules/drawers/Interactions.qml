@@ -62,6 +62,11 @@ CustomMouseArea {
     }
 
     function inDashboardArea(x: real, y: real): bool {
+        if (geometry.dashboardOnBottom) {
+            if (geometry.barOnBottom && geometry.barContains(x, y))
+                return false;
+            return inBottomPanel(panels.dashboard, x, y);
+        }
         if (geometry.dashboardOnLeft) {
             if (geometry.barOnLeft && geometry.barContains(x, y))
                 return false;
@@ -220,7 +225,9 @@ CustomMouseArea {
         }
 
         // Show launcher on hover, or show/hide on drag if hover is disabled
-        if (Config.launcher.showOnHover) {
+        if (geometry.dashboardOnBottom) {
+            // Local: the dashboard owns the bottom edge; the launcher opens from its keybind only.
+        } else if (Config.launcher.showOnHover) {
             if (!screenState.launcher && inBottomPanel(panels.launcher, x, y) && !(geometry.barOnBottom && geometry.barContains(x, y)))
                 screenState.launcher = true;
         } else if (pressed && inBottomPanel(panels.launcher, dragStart.x, dragStart.y) && !(geometry.barOnBottom && geometry.barContains(dragStart.x, dragStart.y)) && withinPanelWidth(panels.launcher, x, y)) {
@@ -242,8 +249,8 @@ CustomMouseArea {
         }
 
         // Show/hide dashboard on drag (for touchscreen devices)
-        if (pressed && inDashboardArea(dragStart.x, dragStart.y) && (geometry.dashboardOnTop ? withinPanelWidth(panels.dashboard, x, y) : withinPanelHeight(panels.dashboard, x, y))) {
-            const dashDrag = geometry.dashboardOnLeft ? dragX : dragY;
+        if (pressed && inDashboardArea(dragStart.x, dragStart.y) && (!geometry.dashboardOnLeft ? withinPanelWidth(panels.dashboard, x, y) : withinPanelHeight(panels.dashboard, x, y))) {
+            const dashDrag = geometry.dashboardOnLeft ? dragX : geometry.dashboardOnBottom ? -dragY : dragY;
             if (dashDrag > Config.dashboard.dragThreshold)
                 screenState.dashboard = true;
             else if (dashDrag < -Config.dashboard.dragThreshold)
@@ -279,6 +286,10 @@ CustomMouseArea {
     // Monitor individual visibility changes
     Connections {
         function onLauncherChanged() {
+            // Local: a bottom dashboard and the launcher share the same spot
+            if (root.screenState.launcher && root.geometry.dashboardOnBottom)
+                root.screenState.dashboard = false;
+
             // If launcher is hidden, clear shortcut flags for dashboard and OSD
             if (!root.screenState.launcher) {
                 root.dashboardShortcutActive = false;
