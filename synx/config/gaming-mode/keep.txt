@@ -1,0 +1,4 @@
+# Game mode keep list. The sweep never kills a process whose command line
+# contains one of these lines, or anything that process launched.
+# Matching is case-insensitive. Lines starting with # are ignored.
+# Example: a line reading  claude  would protect every Claude session.

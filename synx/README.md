@@ -47,6 +47,8 @@ Copies of these live in `synx/config/`. Put each one back at its path to rebuild
 | `pacman/ignorepkg.conf` | `/etc/pacman.conf`, `[options]` section | Stops paru replacing this build. |
 | `kitty/kitty.conf` | `~/.config/kitty/kitty.conf` | Ctrl+V runs `kitty-smart-paste`. |
 | `bin/kitty-smart-paste` | `~/.local/bin/kitty-smart-paste` | Passes Ctrl+V through for images, pastes text directly. |
+| `gaming-mode/gaming-mode.sh` | `~/.claude/scripts/gaming-mode.sh` | Engine behind the bar's game mode button. Needs its sudoers rule, `~/.claude/state/gaming-mode.sudoers`, in `/etc/sudoers.d/zz-gaming-mode`. |
+| `gaming-mode/keep.txt` | `~/.config/gaming-mode/keep.txt` | Processes the game mode sweep never kills, one command-line substring per line. |
 
 `hypr/scheme/current.conf` is not copied. Caelestia regenerates it from the wallpaper.
 
