@@ -40,7 +40,7 @@ Item {
     readonly property real titleGap: Tokens.spacing.small
 
     clip: true
-    implicitWidth: horizontal ? icon.implicitWidth + current.implicitWidth + titleGap : Math.max(icon.implicitWidth, current.implicitHeight)
+    implicitWidth: horizontal ? icon.width + current.implicitWidth + titleGap : Math.max(icon.width, current.implicitHeight)
     implicitHeight: horizontal ? Math.max(icon.implicitHeight, current.implicitHeight) : icon.implicitHeight + current.implicitWidth + titleGap
 
     Loader {
