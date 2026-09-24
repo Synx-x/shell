@@ -397,6 +397,10 @@ StyledWindow {
         y: panel.y + geometry.insetTop(root.borderThickness)
         implicitWidth: panel.width
         implicitHeight: panel.height
+        // Local: closed drawers hide by sliding under the bottom frame edge,
+        // which a floating bar leaves thin. Stop them at the pill's top so a
+        // closed drawer shrinks to nothing, and zero-size blobs are skipped.
+        height: geometry.barFloating ? Math.max(0, Math.min(implicitHeight, root.height - geometry.insetBottom(root.borderThickness) - y)) : implicitHeight
         radius: Tokens.rounding.extraLarge
         deformScale: (deformAmount * Config.appearance.deformScale) / 10000
     }
