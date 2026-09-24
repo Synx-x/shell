@@ -6,6 +6,7 @@ import Caelestia.Config
 import Caelestia.I18n
 import Caelestia.Services
 import qs.components
+import qs.components.misc
 import qs.services
 
 Item {
@@ -97,9 +98,16 @@ Item {
                         usage: Gpu.percentage
                         temperature: Gpu.temperature
                         accent: Colours.palette.m3secondary
+                        showMemory: !isNaN(GpuMem.total)
+                        memoryUsage: GpuMem.percentage
+                        memoryText: `${GpuMem.format(GpuMem.used)} / ${GpuMem.format(GpuMem.total)}`
 
                         ServiceRef {
                             service: Gpu
+                        }
+
+                        Ref {
+                            service: GpuMem
                         }
                     }
                 }

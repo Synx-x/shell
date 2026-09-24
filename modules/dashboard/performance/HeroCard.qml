@@ -17,6 +17,9 @@ StyledRect {
     required property color accent
     required property real usage
     required property real temperature
+    property bool showMemory: false
+    property real memoryUsage: NaN
+    property string memoryText: ""
 
     color: Colours.tPalette.m3surfaceContainer
     radius: Tokens.rounding.extraLarge
@@ -105,6 +108,34 @@ StyledRect {
             implicitHeight: Tokens.padding.small
             fgColour: root.accent
             indeterminate: isNaN(root.usage) || isNaN(root.temperature)
+        }
+
+        RowLayout {
+            Layout.topMargin: Tokens.spacing.small
+            Layout.leftMargin: -Tokens.padding.extraSmall
+            visible: root.showMemory
+            spacing: Tokens.spacing.extraSmall
+
+            MaterialIcon {
+                Layout.topMargin: Math.round(fontInfo.pointSize * 0.08)
+                text: "memory_alt"
+                color: root.memoryUsage > 0.9 ? Colours.palette.m3error : root.accent
+                fontStyle: Tokens.font.icon.medium
+                fill: 1
+            }
+
+            StyledText {
+                text: root.memoryText
+                font: Tokens.font.body.builders.medium.build()
+            }
+        }
+
+        StyledProgressBar {
+            visible: root.showMemory
+            value: isNaN(root.memoryUsage) ? 0 : root.memoryUsage
+            implicitHeight: Tokens.padding.small
+            fgColour: root.accent
+            indeterminate: isNaN(root.memoryUsage)
         }
     }
 
