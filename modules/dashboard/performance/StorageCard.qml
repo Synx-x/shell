@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import Caelestia.Config
 import Caelestia.I18n
 import Caelestia.Services
@@ -13,7 +14,9 @@ StyledRect {
     id: root
 
     readonly property color accent: Colours.palette.m3secondary
-    readonly property real percentage: Storage.primaryDisk?.perc ?? 0
+    property real rootFree: 0
+    property real rootTotal: 0
+    readonly property real percentage: root.rootTotal > 0 ? root.rootFree / root.rootTotal : 0
 
     color: Colours.tPalette.m3surfaceContainer
     radius: Tokens.rounding.extraExtraLarge
@@ -23,6 +26,29 @@ StyledRect {
 
     ServiceRef {
         service: Storage
+    }
+
+    Process {
+        id: rootDiskProc
+
+        command: ["df", "-kP", "/"]
+        running: true
+        stdout: SplitParser {
+            onRead: line => {
+                const fields = line.trim().split(/\s+/);
+                if (fields.length >= 6) {
+                    root.rootTotal = Number(fields[1]);
+                    root.rootFree = Number(fields[3]);
+                }
+            }
+        }
+    }
+
+    Timer {
+        interval: 30000
+        running: true
+        repeat: true
+        onTriggered: rootDiskProc.running = true
     }
 
     ColumnLayout {
@@ -73,7 +99,7 @@ StyledRect {
 
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
-                        text: Tr.trCtx("Used", "storage used")
+                        text: Tr.trCtx("Free", "storage free")
                         font: Tokens.font.body.small
                         color: Colours.palette.m3onSurfaceVariant
                     }
@@ -90,7 +116,7 @@ StyledRect {
                 }
 
                 StyledText {
-                    text: Storage.primaryDisk ? Units.formatKibUsage(Storage.primaryDisk.used, Storage.primaryDisk.total) : Tr.tr("No disks detected")
+                    text: root.rootTotal > 0 ? Units.formatKibUsage(root.rootFree, root.rootTotal) : Tr.tr("No disks detected")
                     font: Tokens.font.body.large
                     color: root.accent
                 }
