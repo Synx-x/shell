@@ -1,6 +1,8 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import Quickshell
+import Quickshell.Widgets
 import Caelestia.Config
 import Caelestia.I18n
 import qs.components
@@ -76,6 +78,20 @@ Item {
         animate: true
         text: Icons.getAppCategoryIcon(Hypr.activeToplevel?.lastIpcObject.class, "desktop_windows")
         color: root.colour
+        opacity: root.appIconSource ? 0 : 1
+    }
+
+    readonly property string appIconSource: {
+        const icon = DesktopEntries.heuristicLookup(Hypr.activeToplevel?.lastIpcObject.class ?? "")?.icon;
+        return icon ? Quickshell.iconPath(icon, true) : "";
+    }
+
+    IconImage {
+        anchors.centerIn: icon
+        visible: root.appIconSource !== ""
+        asynchronous: true
+        implicitSize: icon.implicitHeight
+        source: root.appIconSource
     }
 
     Title {
