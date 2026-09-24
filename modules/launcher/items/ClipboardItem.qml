@@ -78,7 +78,7 @@ Item {
                     return "description";
                 }
                 color: root.modelData.isPinned ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
-                font: Tokens.font.title.medium
+                fontStyle: Tokens.font.icon.medium
             }
 
             ColumnLayout {

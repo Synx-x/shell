@@ -57,7 +57,7 @@ then
     fi
 fi
 
-REV="$(g rev-parse --short HEAD)"
+REV="r$(g rev-list --count HEAD).$(g rev-parse --short HEAD)"
 VER="${TAG#v}"
 AUR="$WORK/aur"
 if [ ! -d "$AUR/.git" ]

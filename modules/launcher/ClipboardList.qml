@@ -220,7 +220,7 @@ Item {
                     id: countText
 
                     anchors.centerIn: parent
-                    text: Tr.tr("%n item(s)", "", listView.count)
+                    text: Tr.trN("%n item", "%n items", listView.count)
                     font: Tokens.font.body.small
                     color: Colours.palette.m3onSurfaceVariant
                     opacity: listView.count > 0 ? 1 : 0
