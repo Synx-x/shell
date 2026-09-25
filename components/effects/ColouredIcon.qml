@@ -8,6 +8,7 @@ IconImage {
     id: root
 
     required property color colour
+    property bool analysed: false
 
     asynchronous: true
 
@@ -15,6 +16,7 @@ IconImage {
     layer.effect: Colouriser {
         sourceColor: analyser.dominantColour
         colorizationColor: root.colour
+        colorize: root.analysed
     }
 
     layer.onEnabledChanged: {
@@ -31,5 +33,7 @@ IconImage {
         id: analyser
 
         sourceItem: root
+
+        onDominantColourChanged: root.analysed = true
     }
 }

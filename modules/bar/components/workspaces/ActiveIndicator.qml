@@ -82,6 +82,7 @@ StyledRect {
         source: root.mask
         sourceColor: Colours.palette.m3onSurface
         colorizationColor: Colours.palette.m3onPrimary
+        colorize: false
 
         x: root.horizontal ? -parent.start : 0
         y: root.horizontal ? 0 : -parent.start

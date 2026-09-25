@@ -4,8 +4,9 @@ import qs.components
 
 MultiEffect {
     property color sourceColor: "black"
+    property bool colorize: true
 
-    colorization: 1
+    colorization: colorize ? 1 : 0
     brightness: 1 - sourceColor.hslLightness
 
     Behavior on colorizationColor {
