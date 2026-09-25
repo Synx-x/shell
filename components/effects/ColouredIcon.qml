@@ -11,6 +11,7 @@ IconImage {
     property bool analysed: false
 
     asynchronous: true
+    mipmap: true
 
     layer.enabled: true
     layer.effect: Colouriser {

@@ -257,6 +257,7 @@ Item {
                     anchors.centerIn: parent
                     visible: win.iconSource !== ""
                     asynchronous: true
+                    mipmap: true
                     implicitSize: win.iconSize
                     source: win.iconSource
                     opacity: root.onOtherMonitor ? 0.5 : 1
