@@ -248,7 +248,7 @@ Item {
                     const icon = DesktopEntries.heuristicLookup(appClass)?.icon;
                     return icon ? Quickshell.iconPath(icon, true) : "";
                 }
-                readonly property real iconSize: root.indSize * (iconSource ? Icons.getAppIconScale(appClass) : 1)
+                readonly property real iconSize: glyph.implicitHeight * (iconSource ? Icons.getAppIconScale(appClass) : 1)
 
                 implicitWidth: Math.max(glyph.implicitWidth, iconSize)
                 implicitHeight: glyph.implicitHeight
