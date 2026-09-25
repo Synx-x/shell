@@ -12,7 +12,6 @@ IconImage {
 
     asynchronous: true
     mipmap: true
-    backer.smooth: false
 
     layer.enabled: true
     layer.effect: Colouriser {
