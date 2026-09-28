@@ -47,6 +47,7 @@ Copies of these live in `synx/config/`. Put each one back at its path to rebuild
 | `pacman/ignorepkg.conf` | `/etc/pacman.conf`, `[options]` section | Stops paru replacing this build. |
 | `kitty/kitty.conf` | `~/.config/kitty/kitty.conf` | Ctrl+V runs `kitty-smart-paste`. |
 | `bin/kitty-smart-paste` | `~/.local/bin/kitty-smart-paste` | Passes Ctrl+V through for images, pastes text directly. |
+| `bin/computer-use-linux-install` | Run it, do not copy it | Builds the [computer-use-linux fork](https://github.com/Synx-x/computer-use-linux) on branch `feat/grim-capture-backend` and installs it to `~/.local/bin/computer-use-linux`. The binary stays out of this repo. Register it after with `claude mcp add --scope user computer-use-linux -- computer-use-linux mcp`. |
 | `gaming-mode/gaming-mode.sh` | `~/.claude/scripts/gaming-mode.sh` | Engine behind the bar's game mode button. Needs its sudoers rule, `~/.claude/state/gaming-mode.sudoers`, in `/etc/sudoers.d/zz-gaming-mode`. |
 | `gaming-mode/keep.txt` | `~/.config/gaming-mode/keep.txt` | Processes the game mode sweep never kills, one command-line substring per line. |
 

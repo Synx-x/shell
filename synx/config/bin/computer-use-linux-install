@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Build and install the computer-use-linux fork into ~/.local/bin.
+# The binary itself is not committed. It is 8 MB of compiled output.
+# This script rebuilds it from source, so a new machine gets the same tool.
+set -euo pipefail
+
+REPO="${REPO:-$HOME/dev/computer-use-linux}"
+REMOTE="${REMOTE:-https://github.com/Synx-x/computer-use-linux.git}"
+BRANCH="${BRANCH:-feat/grim-capture-backend}"
+DEST="${DEST:-$HOME/.local/bin/computer-use-linux}"
+
+if [ ! -d "$REPO/.git" ]; then
+    git clone --branch "$BRANCH" "$REMOTE" "$REPO"
+fi
+
+git -C "$REPO" fetch origin "$BRANCH"
+git -C "$REPO" checkout "$BRANCH"
+cargo build --release --manifest-path "$REPO/Cargo.toml"
+install -m 755 "$REPO/target/release/computer-use-linux" "$DEST"
+
+echo "installed $DEST"
+echo "register it with:"
+echo "  claude mcp add --scope user computer-use-linux -- computer-use-linux mcp"
