@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Restart WirePlumber when it leaves stale duplicate sinks behind.
+# HDMI reconnects can leave several sinks with the same node name. Only one is live.
+set -u
+
+has_dupes() {
+  pactl list short sinks 2>/dev/null | awk '{print $2}' | sort | uniq -d | grep -q .
+}
+
+last=0
+check() {
+  sleep 5  # let hotplug settle before judging
+  has_dupes || return 0
+  now=$(date +%s)
+  (( now - last < 120 )) && return 0  # at most one restart per 2 minutes
+  last=$now
+  echo "duplicate sinks: $(pactl list short sinks | awk '{print $2}' | sort | uniq -d | tr '\n' ' ')- restarting wireplumber"
+  systemctl --user restart wireplumber.service
+}
+
+check
+pactl subscribe | while read -r line; do
+  [[ $line == *"'new' on sink"* ]] && check
+done

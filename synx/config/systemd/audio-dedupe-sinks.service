@@ -1,0 +1,11 @@
+[Unit]
+Description=Restart WirePlumber when duplicate audio sinks appear
+After=pipewire-pulse.service wireplumber.service
+
+[Service]
+ExecStart=%h/.local/bin/audio-dedupe-sinks
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target
