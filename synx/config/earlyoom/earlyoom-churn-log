@@ -1,0 +1,6 @@
+#!/bin/sh
+# earlyoom -N hook. Runs inside earlyoom's sandbox, so it only records the kill.
+# earlyoom-churn-eval (root) decides what to do about repeats.
+name=$(printf '%s' "$EARLYOOM_NAME" | tr -c 'A-Za-z0-9_-' '.' | cut -c1-15)
+[ -n "$name" ] || exit 0
+printf '%s %s\n' "$(date +%s)" "$name" >> /run/earlyoom-churn/kills

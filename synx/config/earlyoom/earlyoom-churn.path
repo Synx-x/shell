@@ -1,0 +1,8 @@
+[Unit]
+Description=Watch earlyoom kills for respawn churn
+
+[Path]
+PathModified=/run/earlyoom-churn/kills
+
+[Install]
+WantedBy=multi-user.target

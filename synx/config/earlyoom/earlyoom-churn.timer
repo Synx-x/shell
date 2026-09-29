@@ -1,0 +1,9 @@
+[Unit]
+Description=Expire earlyoom churn ignores
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target

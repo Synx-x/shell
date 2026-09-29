@@ -8,9 +8,8 @@
 # a vitest OOM. Those are all ~3 MiB, so killing them frees nothing and takes
 # the audio stack and portals down with it. vitest was added to --prefer since
 # its workers were the actual 2.4 GiB each hogs.
-# 2026-09-29: steamwebhelper moved from --prefer to --avoid. During a rustc
-# build OOM, earlyoom killed it about 68 times in one minute. Steam respawns it
-# at once, so each kill freed nothing and flashed Steam windows over the screen.
-# Compiler jobs (rustc, cc1plus, ld, mold, clang) are now preferred, since
-# they are the actual multi-GiB hogs and a failed build is cheap to rerun.
-EARLYOOM_ARGS="-m 10,5 -s 100,100 -r 60 -p --avoid ^(systemd|systemd-.*|Hyprland|sshd|dbus-daemon|dbus-broker.*|.sd-pam.|xdg-.*|dconf-service|at-spi.*|pipewire|wireplumber|tailscaled|uwsm|earlyoom|steam|steamwebhelper)$ --prefer ^(rustc|cc1|cc1plus|ld|ld.lld|lld|mold|clang.*|dota2|chrome|chromium|firefox|electron|.*vitest.*)$"
+# 2026-09-29: steamwebhelper removed from --prefer. During a rustc build OOM,
+# earlyoom killed it about 68 times in a minute. Steam respawns it at once, so
+# each kill freed nothing. Compiler jobs are preferred instead. Repeat kills of
+# any respawning process are now handled by earlyoom-churn-eval, see churn.conf.
+EARLYOOM_ARGS="-m 10,5 -s 100,100 -r 60 -p --avoid ^(systemd|systemd-.*|Hyprland|sshd|dbus-daemon|dbus-broker.*|.sd-pam.|xdg-.*|dconf-service|at-spi.*|pipewire|wireplumber|tailscaled|uwsm|earlyoom)$ --prefer ^(rustc|cc1|cc1plus|ld|ld.lld|lld|mold|clang.*|dota2|chrome|chromium|firefox|electron|.*vitest.*)$"

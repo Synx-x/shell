@@ -1,0 +1,6 @@
+[Unit]
+Description=Stop earlyoom re-killing processes that respawn
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/earlyoom-churn-eval
