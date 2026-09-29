@@ -29,10 +29,28 @@ Protection follows the systemd scope where possible, not a name list.
 
 | Group | Match | Treatment |
 | --- | --- | --- |
-| Games | cgroup `app-Hyprland-steam-.*\.scope` (Steam, gamescope, the game, helpers) | Large negative badness |
+| Protected apps | cgroup `app-Hyprland-<name>-.*\.scope` for each name in the protected-apps list | Large negative badness |
 | Terminals | realpath `/usr/bin/kitty`, `/usr/bin/zsh`, `/usr/bin/bash`, `/home/pc/.local/share/claude/versions/.*` | Large negative badness |
 | Session core | the current earlyoom `--avoid` list (systemd, Hyprland, dbus, pipewire, wireplumber, portals, uwsm) | Large negative badness |
 | Killable | builds and tests inside the kitty scope, browser tabs, other apps | Normal badness |
+
+## Protected apps list
+
+A protected app holds work that is costly to lose: a running game, a long
+render, an unsaved project. Its whole scope is protected, so helper processes
+it spawns stay safe too.
+
+The list lives in `/etc/nohang/protected-apps`, one app name per line. A name
+is the part uwsm puts in the scope, as in `app-Hyprland-<name>-<id>.scope`.
+
+A generator turns the list into cgroup badness rules in the nohang config.
+Adding an app means one new line and a nohang restart. The first entry is
+`steam`, which covers Steam, gamescope, each game and its helpers.
+
+Apps not launched through uwsm have no named scope. They fall back to the
+killable group until they are launched through uwsm.
+
+## Terminal scope
 
 All kitty windows share one scope, `kitty-2915-0.scope`. So terminals are
 protected by binary path, and the jobs they start stay killable.
