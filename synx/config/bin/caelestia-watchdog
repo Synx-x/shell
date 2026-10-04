@@ -1,0 +1,37 @@
+#!/bin/sh
+set -eu
+
+service=caelestia-shell.service
+
+if ! systemctl --user is-active --quiet "$service"; then
+    exit 0
+fi
+
+pid=$(systemctl --user show -p MainPID --value "$service")
+case "$pid" in
+    ''|*[!0-9]*)
+        exit 0
+        ;;
+esac
+
+# Give a freshly started shell time to register its IPC handlers.
+active_usec=$(systemctl --user show -p ActiveEnterTimestampMonotonic --value "$service")
+now_usec=$(awk '{printf "%.0f\n", $1 * 1000000}' /proc/uptime)
+case "$active_usec" in
+    ''|*[!0-9]*)
+        ;;
+    *)
+        if [ "$now_usec" -ge "$active_usec" ] && [ $((now_usec - active_usec)) -lt 15000000 ]; then
+            exit 0
+        fi
+        ;;
+esac
+
+# This calls a harmless read-only handler through the shell's main event loop.
+# A live process can still be frozen in rendering, but this catches event-loop hangs.
+if timeout 3s qs ipc --pid "$pid" call hypr listSpecialWorkspaces >/dev/null 2>&1; then
+    exit 0
+fi
+
+logger -t caelestia-watchdog "Caelestia IPC health check failed for PID $pid; restarting shell"
+systemctl --user restart "$service"

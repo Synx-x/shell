@@ -1,0 +1,17 @@
+[Unit]
+Description=Caelestia Quickshell desktop shell
+After=graphical-session.target
+PartOf=graphical-session.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/qs -c caelestia -n
+Restart=always
+RestartSec=2
+RestartSteps=5
+RestartMaxDelaySec=30
+Slice=app-graphical.slice
+
+[Install]
+WantedBy=graphical-session.target

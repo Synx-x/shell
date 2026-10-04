@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+"""Restart caelestia-shell after a Hyprland monitor is added or removed."""
+import os
+import socket
+import subprocess
+import threading
+
+DEBOUNCE = 2.0
+sig = os.environ["HYPRLAND_INSTANCE_SIGNATURE"]
+runtime_dir = os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
+socket_path = f"{runtime_dir}/hypr/{sig}/.socket2.sock"
+
+timer = None
+
+
+def restart():
+    subprocess.run(["systemctl", "--user", "restart", "caelestia-shell.service"], check=False)
+    print("restarted caelestia-shell", flush=True)
+
+
+with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as hypr_socket:
+    hypr_socket.connect(socket_path)
+    buffer = b""
+    while True:
+        chunk = hypr_socket.recv(4096)
+        if not chunk:
+            raise SystemExit("hyprland socket closed")
+        buffer += chunk
+        *lines, buffer = buffer.split(b"\n")
+        for line in lines:
+            event = line.split(b">>", 1)[0]
+            if event in (b"monitoraddedv2", b"monitorremovedv2"):
+                print(line.decode(errors="replace"), flush=True)
+                if timer:
+                    timer.cancel()
+                timer = threading.Timer(DEBOUNCE, restart)
+                timer.start()

@@ -1,0 +1,8 @@
+[Unit]
+Description=Check Caelestia shell responsiveness
+After=caelestia-shell.service
+PartOf=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/caelestia-watchdog
