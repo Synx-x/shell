@@ -12,4 +12,8 @@
 # earlyoom killed it about 68 times in a minute. Steam respawns it at once, so
 # each kill freed nothing. Compiler jobs are preferred instead. Repeat kills of
 # any respawning process are now handled by earlyoom-churn-eval, see churn.conf.
-EARLYOOM_ARGS="-m 10,5 -s 100,100 -r 60 -p --avoid ^(systemd|systemd-.*|Hyprland|sshd|dbus-daemon|dbus-broker.*|.sd-pam.|xdg-.*|dconf-service|at-spi.*|pipewire|wireplumber|tailscaled|uwsm|earlyoom)$ --prefer ^(rustc|cc1|cc1plus|ld|ld.lld|lld|mold|clang.*|dota2|chrome|chromium|firefox|electron|.*vitest.*)$"
+# 2026-10-08: pipewire became pipewire.* and easyeffects was added. The
+# anchored regex matched pipewire but not pipewire-pulse (14 MiB), so a
+# memory spike killed it, its respawns hit the systemd start limit, and
+# all PulseAudio clients lost sound. easyeffects carries the default sink.
+EARLYOOM_ARGS="-m 10,5 -s 100,100 -r 60 -p --avoid ^(systemd|systemd-.*|Hyprland|sshd|dbus-daemon|dbus-broker.*|.sd-pam.|xdg-.*|dconf-service|at-spi.*|pipewire.*|wireplumber|easyeffects|tailscaled|uwsm|earlyoom)$ --prefer ^(rustc|cc1|cc1plus|ld|ld.lld|lld|mold|clang.*|dota2|chrome|chromium|firefox|electron|.*vitest.*)$"
