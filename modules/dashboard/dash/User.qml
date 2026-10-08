@@ -5,6 +5,7 @@ import M3Shapes
 import Caelestia.Config
 import Caelestia.I18n
 import qs.components
+import qs.components.controls
 import qs.components.effects
 import qs.components.filedialog
 import qs.components.images
@@ -274,5 +275,14 @@ Item {
                 elide: Text.ElideRight
             }
         }
+    }
+
+    // Agent island on/off
+    IconButton {
+        anchors.top: parent.top
+        anchors.right: parent.right
+        icon: "smart_toy"
+        type: Agents.enabled ? IconButton.Filled : IconButton.Tonal
+        onClicked: Agents.setEnabled(!Agents.enabled)
     }
 }

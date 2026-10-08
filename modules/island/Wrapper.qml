@@ -11,7 +11,7 @@ Item {
 
     required property ScreenState screenState
 
-    readonly property bool shown: Agents.count > 0 && !screenState.dashboard
+    readonly property bool shown: Agents.enabled && Agents.count > 0 && !screenState.dashboard
 
     anchors.top: parent.top
     anchors.horizontalCenter: parent.horizontalCenter

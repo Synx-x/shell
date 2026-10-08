@@ -3,12 +3,23 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.utils
 
 // AI coding agents running in herdr panes. Input only ever goes to a herdr pane id.
 Singleton {
     id: root
 
     readonly property string herdr: Quickshell.env("HOME") + "/.local/bin/herdr"
+
+    // Island on or off, saved in $XDG_STATE_HOME/caelestia/island.json. Off also stops polling herdr.
+    property bool enabled: true
+
+    function setEnabled(on: bool): void {
+        enabled = on;
+        settings.setText(JSON.stringify({
+            enabled: on
+        }));
+    }
 
     // [{ paneId, sessionId, tabId, workspaceId, name, initials, hue, group, cwd, status, ...AgentEvents state }]
     property var agents: []
@@ -141,9 +152,42 @@ Singleton {
         }
     }
 
+    // qs ipc call island toggle | enable | disable | isEnabled
+    IpcHandler {
+        target: "island"
+
+        function toggle(): void {
+            root.setEnabled(!root.enabled);
+        }
+
+        function enable(): void {
+            root.setEnabled(true);
+        }
+
+        function disable(): void {
+            root.setEnabled(false);
+        }
+
+        function isEnabled(): bool {
+            return root.enabled;
+        }
+    }
+
+    FileView {
+        id: settings
+
+        path: `${Paths.state}/island.json`
+        printErrors: false
+        onLoaded: {
+            try {
+                root.enabled = JSON.parse(text()).enabled !== false;
+            } catch (e) {}
+        }
+    }
+
     Timer {
         interval: 1500
-        running: true
+        running: root.enabled
         repeat: true
         triggeredOnStart: true
         onTriggered: listProc.running = true
