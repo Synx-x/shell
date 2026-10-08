@@ -113,7 +113,7 @@ Singleton {
                 agentFinished(a.paneId);
         }
         lastDone = done;
-        primed = Object.keys(AgentEvents.byPane).length > 0;
+        primed = panes.length > 0 && Object.keys(AgentEvents.byPane).length > 0;
         agents = next;
     }
 
