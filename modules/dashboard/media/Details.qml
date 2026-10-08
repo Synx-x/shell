@@ -12,6 +12,7 @@ ColumnLayout {
     id: root
 
     readonly property bool hasUnknownLength: (Players.active?.length ?? 0) > 2147483647
+    readonly property bool isTabActive: true
 
     function lengthStr(length: int): string {
         if (length < 0)
@@ -118,6 +119,11 @@ ColumnLayout {
         }
     }
 
+    ChapterTicks {
+        Layout.fillWidth: true
+        Layout.topMargin: -Tokens.spacing.extraSmall
+    }
+
     ButtonRow {
         Layout.topMargin: Tokens.spacing.largeIncreased
         Layout.fillWidth: true
@@ -191,5 +197,26 @@ ColumnLayout {
             }
             implicitWidth: Math.round(implicitHeight * 0.9)
         }
+    }
+
+    AudioVisualizer {
+        Layout.topMargin: Tokens.spacing.largeIncreased
+        Layout.fillWidth: true
+        isTabActive: root.isTabActive
+    }
+
+    PlaybackSpeedPills {
+        Layout.topMargin: Tokens.spacing.largeIncreased
+        Layout.fillWidth: true
+    }
+
+    OutputSwitcher {
+        Layout.topMargin: Tokens.spacing.largeIncreased
+        Layout.fillWidth: true
+    }
+
+    StreamVolumes {
+        Layout.topMargin: Tokens.spacing.largeIncreased
+        Layout.fillWidth: true
     }
 }
