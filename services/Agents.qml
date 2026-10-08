@@ -152,7 +152,7 @@ Singleton {
         }
     }
 
-    // qs ipc call island toggle | enable | disable | isEnabled
+    // qs ipc call island toggle | enable | disable | isEnabled | status
     IpcHandler {
         target: "island"
 
@@ -170,6 +170,10 @@ Singleton {
 
         function isEnabled(): bool {
             return root.enabled;
+        }
+
+        function status(): string {
+            return `enabled=${root.enabled} panes=${root.panes.length} agents=${root.count} working=${root.working.length} waiting=${root.waiting.length}`;
         }
     }
 
