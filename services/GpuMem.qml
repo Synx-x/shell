@@ -8,6 +8,7 @@ import Caelestia.Services
 
 // VRAM usage. The built-in Gpu service has no memory field.
 // NVIDIA reads nvidia-smi. Other GPUs read amdgpu sysfs counters.
+// Also tracks per-process VRAM when dGPU is active.
 Singleton {
     id: root
 
@@ -17,6 +18,9 @@ Singleton {
     readonly property real used: _used
     readonly property real total: _total
     readonly property real percentage: _total > 0 ? _used / _total : NaN
+
+    // Per-process VRAM data from nvidia-smi --query-compute-apps
+    property var processesByVram: ListModel {}
 
     property real _used: NaN
     property real _total: NaN
@@ -39,6 +43,29 @@ Singleton {
                 if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
                     root._used = parts[0] * 1024 * 1024;
                     root._total = parts[1] * 1024 * 1024;
+                }
+            }
+        }
+    }
+
+    Process {
+        id: nvidiaComputeAppsProc
+
+        command: ["nvidia-smi", "--query-compute-apps=pid,process_name,used_memory", "--format=csv,noheader"]
+        stdout: SplitParser {
+            onRead: line => {
+                const parts = line.trim().split(",").map(s => s.trim());
+                if (parts.length >= 3) {
+                    const pid = parseInt(parts[0]);
+                    const name = parts[1];
+                    const memStr = parts[2].replace(" MiB", "").replace(" GiB", "");
+                    let bytes = parseFloat(memStr);
+                    if (parts[2].includes("GiB")) {
+                        bytes *= 1024 * 1024 * 1024;
+                    } else {
+                        bytes *= 1024 * 1024;
+                    }
+                    root.processesByVram.append({ pid, name, bytes });
                 }
             }
         }
@@ -76,11 +103,15 @@ Singleton {
             if (Gpu.type === GpuType.Nvidia) {
                 if (!nvidiaProc.running)
                     nvidiaProc.running = true;
+                root.processesByVram.clear();
+                if (!nvidiaComputeAppsProc.running)
+                    nvidiaComputeAppsProc.running = true;
             } else if (root._sysfsDir) {
                 sysfsUsed.reload();
                 sysfsTotal.reload();
                 root._used = parseFloat(sysfsUsed.text());
                 root._total = parseFloat(sysfsTotal.text());
+                root.processesByVram.clear();
             }
         }
     }
