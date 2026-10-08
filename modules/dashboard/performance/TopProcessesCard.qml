@@ -17,9 +17,8 @@ StyledRect {
     implicitWidth: Tokens.sizes.dashboard.perfNetworkCardWidth
     implicitHeight: Tokens.sizes.dashboard.perfNetworkCardHeight
 
-    ServiceRef {
-        service: TopProcesses
-    }
+    Component.onCompleted: TopProcesses.refCount++
+    Component.onDestruction: TopProcesses.refCount--
 
     ColumnLayout {
         id: layout
@@ -52,11 +51,14 @@ StyledRect {
                 model: TopProcesses.processes
 
                 ProcessRow {
+                    required property var modelData
+
                     Layout.fillWidth: true
-                    cpu: model.cpu
-                    memory: model.mem
-                    name: model.name
-                    pid: model.pid
+                    cpu: modelData.cpu
+                    memory: modelData.mem
+                    name: modelData.name
+                    pid: modelData.pid
+                    isProtected: modelData.protected
                 }
             }
 
@@ -81,6 +83,7 @@ StyledRect {
         required property real memory
         required property string name
         required property int pid
+        property bool isProtected
 
         property int killConfirmState: 0 // 0=no, 1=pending, 2=killed
 
@@ -139,20 +142,17 @@ StyledRect {
                 }
             }
 
-            Button {
-                Layout.preferredWidth: Tokens.sizes.icon.medium + Tokens.padding.medium * 2
-                Layout.preferredHeight: Tokens.sizes.icon.medium + Tokens.padding.medium
-
-                visible: procRow.cpu > 0.1 && procRow.killConfirmState < 2
+            IconButton {
+                visible: !procRow.isProtected && procRow.killConfirmState < 2
                 icon: procRow.killConfirmState === 1 ? "check" : "close"
-                tonal: true
+                type: IconButton.Tonal
 
                 onClicked: {
                     if (procRow.killConfirmState === 0) {
                         procRow.killConfirmState = 1;
                         confirmTimer.restart();
                     } else if (procRow.killConfirmState === 1) {
-                        TopProcesses.killProcess(procRow.pid);
+                        TopProcesses.kill(procRow.pid);
                         procRow.killConfirmState = 2;
                         killTimer.restart();
                     }

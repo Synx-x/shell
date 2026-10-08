@@ -200,23 +200,23 @@ ColumnLayout {
     }
 
     AudioVisualizer {
-        Layout.topMargin: Tokens.spacing.largeIncreased
+        Layout.topMargin: Tokens.spacing.small
         Layout.fillWidth: true
         isTabActive: root.isTabActive
     }
 
     PlaybackSpeedPills {
-        Layout.topMargin: Tokens.spacing.largeIncreased
+        Layout.topMargin: Tokens.spacing.small
         Layout.fillWidth: true
     }
 
     OutputSwitcher {
-        Layout.topMargin: Tokens.spacing.largeIncreased
+        Layout.topMargin: Tokens.spacing.small
         Layout.fillWidth: true
     }
 
     StreamVolumes {
-        Layout.topMargin: Tokens.spacing.largeIncreased
+        Layout.topMargin: Tokens.spacing.small
         Layout.fillWidth: true
     }
 }

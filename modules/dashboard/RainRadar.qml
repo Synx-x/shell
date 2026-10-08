@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
+import Caelestia
 import Caelestia.Config
 import Caelestia.I18n
 import qs.components
@@ -36,52 +37,48 @@ StyledRect {
             Layout.fillHeight: true
             clip: true
 
-            Image {
-                id: baseMap
+            // 3x3 tiles at zoom 6 (RainViewer's max), shifted so the location sits in the centre
+            Item {
+                id: tiles
 
-                anchors.fill: parent
-                cache: false
-                asynchronous: true
+                readonly property int zoom: 6
+                readonly property real fx: (parseFloat(root.longitude) + 180) / 360 * Math.pow(2, zoom)
+                readonly property real fy: (1 - Math.log(Math.tan(Math.PI / 4 + parseFloat(root.latitude) * Math.PI / 360)) / Math.PI) / 2 * Math.pow(2, zoom)
+                readonly property int tx: Math.floor(fx)
+                readonly property int ty: Math.floor(fy)
 
-                source: {
-                    const lat = root.latitude;
-                    const lon = root.longitude;
-                    const zoom = 8;
-                    const size = 256;
-                    return `https://tile.openstreetmap.org/${zoom}/${Math.floor((parseFloat(lon) + 180) / 360 * Math.pow(2, zoom))}/${Math.floor((1 - Math.log(Math.tan(Math.PI / 4 + parseFloat(lat) * Math.PI / 360)) / Math.PI) / 2 * Math.pow(2, zoom))}.png`;
-                }
+                width: 768
+                height: 768
+                x: radarContainer.width / 2 - (256 + (fx - tx) * 256)
+                y: radarContainer.height / 2 - (256 + (fy - ty) * 256)
 
-                onStatusChanged: {
-                    if (status === Image.Error) {
-                        console.warn("Failed to load base map");
-                        radarContainer.visible = false;
-                    }
-                }
-            }
+                Repeater {
+                    model: 9
 
-            Image {
-                id: radarOverlay
+                    Item {
+                        id: tile
 
-                anchors.fill: parent
-                cache: false
-                asynchronous: true
-                opacity: 0.7
+                        required property int index
+                        readonly property int dx: index % 3 - 1
+                        readonly property int dy: Math.floor(index / 3) - 1
 
-                source: {
-                    if (!radarData || !radarData.radarPath)
-                        return "";
-                    const lat = root.latitude;
-                    const lon = root.longitude;
-                    const zoom = 8;
-                    const size = 256;
-                    const tileX = Math.floor((parseFloat(lon) + 180) / 360 * Math.pow(2, zoom));
-                    const tileY = Math.floor((1 - Math.log(Math.tan(Math.PI / 4 + parseFloat(lat) * Math.PI / 360)) / Math.PI) / 2 * Math.pow(2, zoom));
-                    return `https://tilecache.rainviewer.com${radarData.radarPath}/256/${zoom}/${tileX}/${tileY}/4/1_1.png`;
-                }
+                        x: (dx + 1) * 256
+                        y: (dy + 1) * 256
+                        width: 256
+                        height: 256
 
-                onStatusChanged: {
-                    if (status === Image.Error) {
-                        console.warn("Failed to load radar overlay");
+                        Image {
+                            anchors.fill: parent
+                            asynchronous: true
+                            source: `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/${tiles.zoom}/${tiles.ty + tile.dy}/${tiles.tx + tile.dx}`
+                        }
+
+                        Image {
+                            anchors.fill: parent
+                            asynchronous: true
+                            opacity: 0.8
+                            source: root.radarData?.radarPath ? `https://tilecache.rainviewer.com${root.radarData.radarPath}/256/${tiles.zoom}/${tiles.tx + tile.dx}/${tiles.ty + tile.dy}/4/1_1.png` : ""
+                        }
                     }
                 }
             }
@@ -109,8 +106,8 @@ StyledRect {
                 anchors.right: parent.right
                 anchors.margins: Tokens.padding.extraSmall
 
-                text: radarData && radarData.time ? new Date(radarData.time * 1000).toLocaleTimeString() : "--:--"
-                font: Tokens.font.body.builders.extraSmall.build()
+                text: root.radarData && root.radarData.time ? Qt.formatDateTime(new Date(root.radarData.time * 1000), "h:mm") : "--:--"
+                font: Tokens.font.body.builders.small.build()
                 color: Colours.palette.m3onSurfaceVariant
             }
         }
@@ -122,17 +119,19 @@ StyledRect {
 
     function fetchRadarData(): void {
         Requests.get("https://api.rainviewer.com/public/weather-maps.json", text => {
+            if (!root)
+                return;
             try {
                 const json = JSON.parse(text);
                 if (json.radar && json.radar.nowcast && json.radar.nowcast.length > 0) {
                     const latest = json.radar.nowcast[json.radar.nowcast.length - 1];
-                    radarData = {
+                    root.radarData = {
                         time: latest.time,
                         radarPath: latest.path
                     };
                 } else if (json.radar && json.radar.past && json.radar.past.length > 0) {
                     const latest = json.radar.past[json.radar.past.length - 1];
-                    radarData = {
+                    root.radarData = {
                         time: latest.time,
                         radarPath: latest.path
                     };

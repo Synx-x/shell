@@ -10,12 +10,14 @@ import Caelestia.Config
 Singleton {
     id: root
 
+    property int refCount: 0
+
     property string profile: "unknown" // "docked" | "mobile" | "unknown"
     property string dgpuState: "unknown" // "active" | "suspended" | "unknown"
     property real dgpuPowerW: 0
     property real dgpuTempC: 0
 
-    property string _configPath: "%1/.config/hypr/source/environment_variables.conf".arg(Qt.getenv("HOME"))
+    property string _configPath: "%1/.config/hypr/source/environment_variables.conf".arg(Quickshell.env("HOME"))
     property string _dgpuDevicePath: "/sys/bus/pci/devices/0000:01:00.0/power/runtime_status"
 
     FileView {
@@ -45,7 +47,7 @@ Singleton {
 
     Timer {
         interval: GlobalConfig.dashboard.resourceUpdateInterval
-        running: true
+        running: root.refCount > 0
         repeat: true
 
         onTriggered: {

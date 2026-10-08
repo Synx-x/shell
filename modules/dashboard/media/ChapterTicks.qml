@@ -26,7 +26,7 @@ Item {
     readonly property int totalDuration: Players.active?.length ?? 0
     readonly property bool hasChapters: chapters.length > 0
 
-    implicitHeight: visible ? Tokens.sizes.controls.small / 2 : 0
+    implicitHeight: visible ? 6 : 0
     visible: hasChapters
 
     Row {

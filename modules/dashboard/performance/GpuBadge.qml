@@ -15,9 +15,8 @@ StyledRect {
     implicitWidth: layout.implicitWidth + Tokens.padding.large * 2
     implicitHeight: layout.implicitHeight + Tokens.padding.large * 2
 
-    ServiceRef {
-        service: GpuProfile
-    }
+    Component.onCompleted: GpuProfile.refCount++
+    Component.onDestruction: GpuProfile.refCount--
 
     ColumnLayout {
         id: layout
@@ -87,7 +86,7 @@ StyledRect {
                     spacing: Tokens.spacing.extraSmall
 
                     MaterialIcon {
-                        text: GpuProfile.dgpuTempC > 80 ? "thermometer_alert" : "thermometer"
+                        text: GpuProfile.dgpuTempC > 80 ? "device_thermostat" : "device_thermostat"
                         color: GpuProfile.dgpuTempC > 80 ? Colours.palette.m3error : Colours.palette.m3primary
                         fontStyle: Tokens.font.icon.small
                     }

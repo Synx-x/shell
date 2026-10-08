@@ -13,8 +13,8 @@ Item {
 
     readonly property int barCount: GlobalConfig.services.visualiserBars
     readonly property real barSpacing: Tokens.spacing.extraSmall
-    readonly property real minBarHeight: Tokens.sizes.controls.small
-    readonly property real maxBarHeight: Tokens.sizes.dashboard.mediaVisualizerHeight ?? Tokens.sizes.controls.large * 2
+    readonly property real minBarHeight: 2
+    readonly property real maxBarHeight: 48
 
     implicitHeight: maxBarHeight
 

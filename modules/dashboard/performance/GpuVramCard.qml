@@ -18,9 +18,8 @@ StyledRect {
 
     visible: !isNaN(GpuMem.total) && GpuMem.processesByVram.count > 0
 
-    ServiceRef {
-        service: GpuMem
-    }
+    Component.onCompleted: GpuMem.refCount++
+    Component.onDestruction: GpuMem.refCount--
 
     ColumnLayout {
         id: layout
@@ -68,24 +67,19 @@ StyledRect {
                         model: GpuMem.processesByVram
 
                         Item {
+                            id: seg
+
+                            required property int index
+                            required property real bytes
+
                             Layout.fillHeight: true
-                            Layout.preferredWidth: (model.bytes / GpuMem.used) * parent.width
+                            Layout.preferredWidth: (bytes / Math.max(1, GpuMem.used)) * parent.width
 
                             StyledRect {
                                 anchors.fill: parent
-                                color: getProcessColor(index)
-                                radius: index === 0 ? Tokens.rounding.small : 0
-                                anchors.rightMargin: index === GpuMem.processesByVram.count - 1 ? 0 : -1
-                            }
-
-                            ToolTip.text: "%1: %2".arg(model.name).arg(Units.formatBytes(model.bytes))
-                            ToolTip.visible: ma.containsMouse && model.bytes > 0
-                            ToolTip.delay: 500
-
-                            MouseArea {
-                                id: ma
-                                anchors.fill: parent
-                                hoverEnabled: true
+                                color: root.getProcessColor(seg.index) ?? Colours.palette.m3primary
+                                radius: seg.index === 0 ? Tokens.rounding.small : 0
+                                anchors.rightMargin: seg.index === GpuMem.processesByVram.count - 1 ? 0 : -1
                             }
                         }
                     }
@@ -101,24 +95,28 @@ StyledRect {
                     model: Math.min(GpuMem.processesByVram.count, 4)
 
                     RowLayout {
+                        id: legendRow
+
+                        required property int index
+
                         spacing: Tokens.spacing.small
 
                         Rectangle {
                             Layout.preferredWidth: Tokens.padding.medium
                             Layout.preferredHeight: Tokens.padding.medium
-                            color: getProcessColor(index)
-                            radius: Tokens.rounding.extraSmall
+                            color: root.getProcessColor(legendRow.index)
+                            radius: Tokens.rounding.small
                         }
 
                         StyledText {
                             Layout.fillWidth: true
-                            text: GpuMem.processesByVram.get(index).name
+                            text: GpuMem.processesByVram.get(legendRow.index).name
                             font: Tokens.font.body.small
                             elide: Text.ElideRight
                         }
 
                         StyledText {
-                            text: Units.formatBytes(GpuMem.processesByVram.get(index).bytes)
+                            text: Units.formatBytes(GpuMem.processesByVram.get(legendRow.index).bytes)
                             font: Tokens.font.body.builders.small.weight(Font.Medium).build()
                             color: Colours.palette.m3onSurfaceVariant
                         }
@@ -128,14 +126,14 @@ StyledRect {
 
             StyledText {
                 Layout.alignment: Qt.AlignRight
-                text: Tr.trCtx("Total", "VRAM total").arg(Units.formatBytes(GpuMem.used))
+                text: Tr.trCtx("Total %1", "VRAM total").arg(Units.formatBytes(GpuMem.used))
                 font: Tokens.font.body.small
                 color: Colours.palette.m3onSurfaceVariant
             }
         }
     }
 
-    function getProcessColor(index: int): color {
+    function getProcessColor(index: int): var {
         const colors = [
             Colours.palette.m3primary,
             Colours.palette.m3secondary,

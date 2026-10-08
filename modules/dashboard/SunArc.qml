@@ -72,13 +72,16 @@ StyledRect {
                     const startAngle = Math.PI + startProgress * Math.PI;
                     const endAngle = Math.PI + endProgress * Math.PI;
 
+                    // Golden hours sit at both ends of the day: sunrise to ghStart, ghEnd to sunset
                     ctx.fillStyle = Colours.palette.m3tertiary;
-                    ctx.globalAlpha = 0.15;
-                    ctx.beginPath();
-                    ctx.moveTo(centerX, centerY);
-                    ctx.arc(centerX, centerY, radius, startAngle, endAngle, false);
-                    ctx.lineTo(centerX, centerY);
-                    ctx.fill();
+                    ctx.globalAlpha = 0.25;
+                    for (const [a, b] of [[Math.PI, startAngle], [endAngle, Math.PI * 2]]) {
+                        ctx.beginPath();
+                        ctx.moveTo(centerX, centerY);
+                        ctx.arc(centerX, centerY, radius, a, b, false);
+                        ctx.lineTo(centerX, centerY);
+                        ctx.fill();
+                    }
                     ctx.globalAlpha = 1.0;
                 }
 
@@ -105,11 +108,16 @@ StyledRect {
                 }
             }
 
-            function parseSunTime(timeStr: string): Date {
+            function parseSunTime(timeStr: string): var {
                 const today = new Date();
                 const parts = timeStr.split(":");
-                const hours = parseInt(parts[0]) || 0;
+                let hours = parseInt(parts[0]) || 0;
                 const minutes = parseInt(parts[1]) || 0;
+                const pm = /pm/i.test(timeStr);
+                if (pm && hours < 12)
+                    hours += 12;
+                else if (/am/i.test(timeStr) && hours === 12)
+                    hours = 0;
                 today.setHours(hours, minutes, 0);
                 return today;
             }
@@ -152,7 +160,7 @@ StyledRect {
                     color: Colours.palette.m3onSurfaceVariant
                 }
                 StyledText {
-                    text: root.goldenHourStart ? Qt.formatDateTime(root.goldenHourStart, Units.twelveHourClock ? "h:mm A" : "h:mm") + " - " + Qt.formatDateTime(root.goldenHourEnd, Units.twelveHourClock ? "h:mm A" : "h:mm") : "--:-- - --:--"
+                    text: root.goldenHourEnd ? Qt.formatDateTime(root.goldenHourEnd, Units.twelveHourClock ? "h:mm A" : "h:mm") : "--:--"
                     font: Tokens.font.body.builders.small.weight(Font.DemiBold).build()
                     color: Colours.palette.m3secondary
                 }

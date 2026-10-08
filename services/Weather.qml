@@ -31,7 +31,7 @@ Singleton {
     readonly property string sunrise: cc ? Qt.formatDateTime(new Date(cc.sunrise), Units.twelveHourClock ? "h:mm A" : "h:mm") : "--:--"
     readonly property string sunset: cc ? Qt.formatDateTime(new Date(cc.sunset), Units.twelveHourClock ? "h:mm A" : "h:mm") : "--:--"
     readonly property int uvIndex: cc?.uvIndex ?? 0
-    readonly property int usAqi: cc?.usAqi ?? -1
+    property int usAqi: -1
     readonly property var goldenHourStart: cc?.goldenHourStart ?? null
     readonly property var goldenHourEnd: cc?.goldenHourEnd ?? null
 
@@ -247,6 +247,12 @@ Singleton {
         if (url === "")
             return;
 
+        const [aqLat, aqLon] = loc.split(",").map(s => s.trim());
+        Requests.get(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${aqLat}&longitude=${aqLon}&current=us_aqi`, text => {
+            const aq = JSON.parse(text);
+            root.usAqi = aq.current?.us_aqi ?? -1;
+        });
+
         Requests.get(url, text => {
             const json = JSON.parse(text);
             if (!json.current || !json.daily)
@@ -266,7 +272,6 @@ Singleton {
                 sunrise: sunrise,
                 sunset: sunset,
                 uvIndex: Math.round(json.current.uv_index ?? 0),
-                usAqi: json.current.us_aqi ?? -1,
                 goldenHourStart: goldenHour.start,
                 goldenHourEnd: goldenHour.end
             };
@@ -310,7 +315,7 @@ Singleton {
 
         const [lat, lon] = loc.split(",").map(s => s.trim());
         const baseUrl = "https://api.open-meteo.com/v1/forecast";
-        const params = ["latitude=" + lat, "longitude=" + lon, "hourly=weather_code,temperature_2m,precipitation_probability,uv_index", "daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max", "current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,uv_index,us_aqi", "timezone=auto", "forecast_days=7"];
+        const params = ["latitude=" + lat, "longitude=" + lon, "hourly=weather_code,temperature_2m,precipitation_probability,uv_index", "daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max", "current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,uv_index", "timezone=auto", "forecast_days=7"];
 
         return baseUrl + "?" + params.join("&");
     }

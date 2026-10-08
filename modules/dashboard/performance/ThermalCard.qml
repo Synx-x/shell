@@ -4,6 +4,7 @@ import Caelestia.Config
 import Caelestia.I18n
 import Caelestia.Services
 import qs.components
+import qs.components.controls
 import qs.services
 
 StyledRect {
@@ -15,9 +16,8 @@ StyledRect {
     implicitWidth: Tokens.sizes.dashboard.perfNetworkCardWidth
     implicitHeight: Tokens.sizes.dashboard.perfNetworkCardHeight
 
-    ServiceRef {
-        service: SystemUsage
-    }
+    Component.onCompleted: SystemUsage.refCount++
+    Component.onDestruction: SystemUsage.refCount--
 
     ColumnLayout {
         id: layout
@@ -50,7 +50,7 @@ StyledRect {
                 spacing: Tokens.spacing.small
 
                 MaterialIcon {
-                    text: SystemUsage.cpuTempC > 90 ? "thermometer_alert" : "thermometer"
+                    text: "thermometer"
                     color: SystemUsage.cpuTempC > 90 ? Colours.palette.m3error : Colours.palette.m3primary
                     fontStyle: Tokens.font.icon.medium
                     fill: 1

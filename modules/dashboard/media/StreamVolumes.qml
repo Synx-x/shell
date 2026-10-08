@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Services.Pipewire
 import Caelestia.Config
 import Caelestia.I18n
 import qs.components
@@ -12,7 +13,7 @@ import qs.services
 Item {
     id: root
 
-    readonly property list<PwNode> streams: Audio.streams.filter(s => s.audio && !s.isStream === false)
+    readonly property list<PwNode> streams: Audio.streams.filter(s => s.audio && s.isStream && (s.properties["application.name"] ?? s.name) !== "caelestia-shell" && (s.properties["application.process.binary"] ?? "") !== "qs")
     readonly property int maxStreamsToShow: 4
 
     implicitHeight: visible ? layout.implicitHeight : 0
@@ -88,7 +89,7 @@ Item {
                     }
 
                     StyledText {
-                        Layout.preferredWidth: Tokens.sizes.controls.medium
+                        Layout.preferredWidth: 40
                         text: Math.round(Audio.getStreamVolume(modelData) * 100) + "%"
                         font: Tokens.font.label.small
                         color: Colours.palette.m3onSurfaceVariant

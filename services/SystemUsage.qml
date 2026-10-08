@@ -9,6 +9,8 @@ import Caelestia.Config
 Singleton {
     id: root
 
+    property int refCount: 0
+
     property real cpuTempC: NaN
     property int fanRpmMin: 0
     property int fanRpmMax: 0
@@ -27,7 +29,7 @@ Singleton {
 
     Timer {
         interval: GlobalConfig.dashboard.resourceUpdateInterval
-        running: true
+        running: root.refCount > 0
         repeat: true
 
         onTriggered: {
@@ -36,55 +38,44 @@ Singleton {
     }
 
     function parseSensorsOutput(json: string): void {
+        let data;
         try {
-            const data = JSON.parse(json);
-            let maxTemp = NaN;
-
-            // Look for CPU temp sensors
-            for (const sensor in data) {
-                if (sensor.includes("coretemp") || sensor.includes("acpitz") || sensor.includes("iwlwifi")) {
-                    const sensorData = data[sensor];
-                    if (sensorData && sensorData[0]) {
-                        for (const key in sensorData[0]) {
-                            if (key.includes("_input")) {
-                                const temp = sensorData[0][key] / 1000;
-                                if (!isNaN(temp) && (isNaN(maxTemp) || temp > maxTemp)) {
-                                    maxTemp = temp;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (!isNaN(maxTemp)) {
-                root.cpuTempC = maxTemp;
-            }
-
-            // Look for fan RPM from "it8792-*" or "asus_*" type sensors
-            for (const sensor in data) {
-                if (sensor.includes("fan") || sensor.includes("it8792") || sensor.includes("asus")) {
-                    const sensorData = data[sensor];
-                    if (sensorData && sensorData[0]) {
-                        for (const key in sensorData[0]) {
-                            if (key.includes("_input") && key.includes("fan")) {
-                                const rpm = sensorData[0][key];
-                                if (!isNaN(rpm) && rpm > 0) {
-                                    if (root.fanRpmMin === 0 || rpm < root.fanRpmMin) {
-                                        root.fanRpmMin = Math.round(rpm);
-                                    }
-                                    if (rpm > root.fanRpmMax) {
-                                        root.fanRpmMax = Math.round(rpm);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            data = JSON.parse(json);
         } catch (e) {
-            console.error("Failed to parse sensors JSON:", e.message);
+            return;
         }
+
+        // sensors -j: { chip: { feature: { name_input: value } } }, values already in °C / RPM
+        let pkg = NaN;
+        let hottest = NaN;
+        let fanMin = 0;
+        let fanMax = 0;
+        for (const chip in data) {
+            for (const feature in data[chip]) {
+                const f = data[chip][feature];
+                if (typeof f !== "object")
+                    continue;
+                for (const key in f) {
+                    if (!key.endsWith("_input"))
+                        continue;
+                    const v = f[key];
+                    if (chip.startsWith("coretemp") && key.startsWith("temp")) {
+                        if (feature.startsWith("Package"))
+                            pkg = v;
+                        hottest = isNaN(hottest) ? v : Math.max(hottest, v);
+                    } else if (key.startsWith("fan") && v > 0) {
+                        fanMin = fanMin === 0 ? v : Math.min(fanMin, v);
+                        fanMax = Math.max(fanMax, v);
+                    }
+                }
+            }
+        }
+
+        const cpu = isNaN(pkg) ? hottest : pkg;
+        if (!isNaN(cpu))
+            root.cpuTempC = cpu;
+        root.fanRpmMin = Math.round(fanMin);
+        root.fanRpmMax = Math.round(fanMax);
     }
 
     Component.onCompleted: {

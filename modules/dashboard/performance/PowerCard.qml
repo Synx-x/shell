@@ -5,6 +5,7 @@ import Caelestia.Config
 import Caelestia.I18n
 import Caelestia.Services
 import qs.components
+import qs.components.controls
 import qs.services
 import qs.utils
 
@@ -89,7 +90,7 @@ StyledRect {
                 }
 
                 StyledText {
-                    text: formatBatteryTime(UPower.displayDevice.timeToEmpty ?? 0)
+                    text: root.formatBatteryTime(UPower.displayDevice.timeToEmpty ?? 0)
                     font: Tokens.font.body.small
                     color: Colours.palette.m3onSurfaceVariant
                 }
@@ -148,7 +149,7 @@ StyledRect {
         }
     }
 
-    function formatBatteryTime(seconds: number): string {
+    function formatBatteryTime(seconds: real): string {
         if (seconds <= 0) return "...";
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);

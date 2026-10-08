@@ -5,61 +5,54 @@ import Quickshell
 import Quickshell.Io
 import Caelestia.Config
 
-// Track top 5 processes by CPU usage
+// Top 5 processes by CPU. Polls only while a card holds a ref.
 Singleton {
     id: root
 
-    // ListModel with pid, name, cpu, memory fields
-    property var processes: ListModel {}
+    property int refCount: 0
 
-    readonly property var blacklist: ["qs", "quickshell", "hyprland"]
+    // [{ pid, cpu, mem, name, protected }]
+    property var processes: []
+
+    // Never offer to kill the shell or the compositor
+    readonly property var protectedNames: ["qs", "quickshell", "Hyprland", "systemd"]
+
+    function kill(pid: int): void {
+        Quickshell.execDetached(["kill", "-TERM", String(pid)]);
+    }
 
     Process {
         id: psProc
 
-        command: ["bash", "-c", "ps aux --sort=-%cpu | awk 'NR>1 {print $2, $3, $4, $11}' | head -20"]
-        running: false
-        stdout: SplitParser {
-            onRead: line => {
-                processPsLine(line);
+        command: ["ps", "-eo", "pid,pcpu,pmem,comm", "--sort=-pcpu", "--no-headers"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const out = [];
+                for (const line of text.split("\n")) {
+                    const p = line.trim().split(/\s+/);
+                    if (p.length < 4 || p[3] === "ps")
+                        continue;
+                    const name = p.slice(3).join(" ");
+                    out.push({
+                        pid: parseInt(p[0]),
+                        cpu: parseFloat(p[1]),
+                        mem: parseFloat(p[2]),
+                        name: name,
+                        protected: root.protectedNames.includes(name)
+                    });
+                    if (out.length === 5)
+                        break;
+                }
+                root.processes = out;
             }
         }
     }
 
     Timer {
         interval: GlobalConfig.dashboard.resourceUpdateInterval
-        running: true
+        running: root.refCount > 0
         repeat: true
-
-        onTriggered: {
-            root.processes.clear();
-            psProc.running = true;
-        }
-    }
-
-    function processPsLine(line: string): void {
-        const parts = line.trim().split(/\s+/);
-        if (parts.length >= 4) {
-            const pid = parseInt(parts[0]);
-            const cpu = parseFloat(parts[1]);
-            const mem = parseFloat(parts[2]);
-            const name = parts[3];
-
-            // Filter out blacklisted processes
-            if (!blacklist.some(b => name.toLowerCase().includes(b))) {
-                if (root.processes.count < 5 && cpu > 0.1) {
-                    root.processes.append({ pid, cpu, mem, name });
-                }
-            }
-        }
-    }
-
-    function killProcess(pid: number): boolean {
-        const proc = Process.spawn(["kill", "-15", String(pid)]);
-        return proc.waitForFinished(1000);
-    }
-
-    Component.onCompleted: {
-        psProc.running = true;
+        triggeredOnStart: true
+        onTriggered: psProc.running = true
     }
 }

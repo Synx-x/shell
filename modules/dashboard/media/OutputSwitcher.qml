@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Services.Pipewire
 import Caelestia.Config
 import Caelestia.I18n
 import qs.components
@@ -56,7 +57,7 @@ Item {
 
                     readonly property bool isActive: modelData === root.currentSink
 
-                    text: modelData.description || modelData.name || Tr.trCtx("Unknown", "unknown audio device")
+                    text: (modelData.nickname || modelData.description || modelData.name || Tr.trCtx("Unknown", "unknown audio device")).replace(/\s*[\[(].*$/, "").replace(/ High Definition Audio Controller/, "").slice(0, 28)
                     type: isActive ? TextButton.Filled : TextButton.Tonal
 
                     onClicked: {
