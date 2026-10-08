@@ -130,33 +130,23 @@ Item {
             }
         }
 
-        RowLayout {
+        EnvironmentPills {
             Layout.fillWidth: true
             Layout.leftMargin: Tokens.padding.large
             Layout.rightMargin: Tokens.padding.large
-            spacing: Tokens.spacing.medium
+            Layout.preferredHeight: 80
 
-            EnvironmentPills {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 300
-
-                uvIndex: Weather.uvIndex
-                usAqi: Weather.usAqi
-            }
+            uvIndex: Weather.uvIndex
+            usAqi: Weather.usAqi
         }
 
-        RowLayout {
+        HourlyChart {
             Layout.fillWidth: true
             Layout.leftMargin: Tokens.padding.large
             Layout.rightMargin: Tokens.padding.large
-            spacing: Tokens.spacing.medium
+            Layout.preferredHeight: 180
 
-            HourlyChart {
-                Layout.fillWidth: true
-                Layout.minimumHeight: 150
-
-                hourlyData: Weather.hourlyForecast
-            }
+            hourlyData: Weather.hourlyForecast
         }
 
         RowLayout {
@@ -167,7 +157,6 @@ Item {
 
             SunArc {
                 Layout.fillWidth: true
-                Layout.minimumHeight: 200
 
                 sunrise: Weather.sunrise
                 sunset: Weather.sunset
@@ -177,11 +166,9 @@ Item {
 
             RainRadar {
                 Layout.fillWidth: true
-                Layout.minimumHeight: 200
-                Layout.minimumWidth: 200
 
-                latitude: Weather.loc.split(",")[0]
-                longitude: Weather.loc.split(",")[1]
+                latitude: Weather.loc && Weather.loc.indexOf(",") > -1 ? Weather.loc.split(",")[0] : "0"
+                longitude: Weather.loc && Weather.loc.indexOf(",") > -1 ? Weather.loc.split(",")[1] : "0"
             }
         }
 

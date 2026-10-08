@@ -24,6 +24,7 @@ Item {
             id: uvPill
 
             Layout.fillWidth: true
+            Layout.preferredHeight: 70
             icon: "wb_sunny"
             label: Tr.tr("UV Index")
             value: root.uvIndex
@@ -35,6 +36,7 @@ Item {
             id: aqiPill
 
             Layout.fillWidth: true
+            Layout.preferredHeight: 70
             icon: "air"
             label: Tr.tr("Air Quality")
             value: root.usAqi >= 0 ? root.usAqi : -1
