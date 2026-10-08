@@ -130,6 +130,48 @@ Item {
             }
         }
 
+        EnvironmentPills {
+            Layout.fillWidth: true
+            Layout.leftMargin: Tokens.padding.large
+            Layout.rightMargin: Tokens.padding.large
+            Layout.preferredHeight: 80
+
+            uvIndex: Weather.uvIndex
+            usAqi: Weather.usAqi
+        }
+
+        HourlyChart {
+            Layout.fillWidth: true
+            Layout.leftMargin: Tokens.padding.large
+            Layout.rightMargin: Tokens.padding.large
+            Layout.preferredHeight: 180
+
+            hourlyData: Weather.hourlyForecast
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: Tokens.padding.large
+            Layout.rightMargin: Tokens.padding.large
+            spacing: Tokens.spacing.medium
+
+            SunArc {
+                Layout.fillWidth: true
+
+                sunrise: Weather.sunrise
+                sunset: Weather.sunset
+                goldenHourStart: Weather.goldenHourStart
+                goldenHourEnd: Weather.goldenHourEnd
+            }
+
+            RainRadar {
+                Layout.fillWidth: true
+
+                latitude: Weather.loc && Weather.loc.indexOf(",") > -1 ? Weather.loc.split(",")[0] : "0"
+                longitude: Weather.loc && Weather.loc.indexOf(",") > -1 ? Weather.loc.split(",")[1] : "0"
+            }
+        }
+
         StyledText {
             Layout.topMargin: Tokens.spacing.medium
             Layout.leftMargin: Tokens.padding.medium
