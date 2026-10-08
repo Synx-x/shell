@@ -136,10 +136,6 @@ Item {
         id: island
 
         screenState: root.screenState
-        dashboardPanel: dashboard
-
-        anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
         anchors.margins: 8
     }
 

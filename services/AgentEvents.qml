@@ -1,92 +1,84 @@
 pragma Singleton
-pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.utils
 
+// Tool events written by the Claude Code hook caelestia_agent_events.py, keyed by herdr pane id.
 Singleton {
     id: root
 
-    property map agentTickers: ({})
-    property map agentPermissions: ({})
-    property int lastEventCount: 0
+    // paneId -> { ticker, permission }
+    property var byPane: ({})
 
-    function readEventsFile() {
-        const eventsPath = `${Paths.home}/.local/state/caelestia/agents.jsonl`;
-        const proc = Quickshell.exec(["tail", "-100", eventsPath], result => {
-            if (!result.stdout) return;
+    function tickerFor(paneId: string): string {
+        return byPane[paneId]?.ticker ?? "";
+    }
 
-            const lines = result.stdout.trim().split("\n");
-            for (const line of lines) {
-                if (!line.trim()) continue;
-                try {
-                    const event = JSON.parse(line);
-                    const paneId = event.pane || "";
-                    if (!paneId) continue;
+    function permissionFor(paneId: string): string {
+        return byPane[paneId]?.permission ?? "";
+    }
 
-                    if (event.event === "Permission") {
-                        root.agentPermissions[paneId] = {
-                            timestamp: event.ts,
-                            text: event.text || "",
-                            choices: parseChoices(event.text || "")
-                        };
-                        root.agentPermissionsChanged();
-                    } else if (["Edit", "Write", "MultiEdit"].includes(event.event)) {
-                        if (!root.agentTickers[paneId]) {
-                            root.agentTickers[paneId] = [];
-                        }
-                        root.agentTickers[paneId].push({
-                            file: event.file || "",
-                            added: event.added || 0,
-                            removed: event.removed || 0,
-                            timestamp: event.ts
-                        });
-                        if (root.agentTickers[paneId].length > 10) {
-                            root.agentTickers[paneId].shift();
-                        }
-                        root.agentTickersChanged();
-                    }
-                } catch (e) {
-                    console.warn("Failed to parse event line:", e);
-                }
+    // working | blocked | idle | "" (no events yet)
+    function statusFor(paneId: string): string {
+        return byPane[paneId]?.status ?? "";
+    }
+
+    function describe(e): string {
+        const file = e.file ? e.file.split("/").pop() : "";
+        if (["Edit", "Write", "MultiEdit"].includes(e.event))
+            return `Edited ${file} +${e.added ?? 0} −${e.removed ?? 0}`;
+        if (e.event === "Read")
+            return `Reading ${file}`;
+        if (e.event === "Bash")
+            return `Running ${(e.text || "").split("\n")[0]}`;
+        if (e.event === "Stop")
+            return "Done";
+        if (e.event === "Prompt")
+            return "Thinking";
+        return e.tool ? `${e.tool} ${file}`.trim() : "";
+    }
+
+    function parse(text: string): void {
+        const lines = text.trim().split("\n").slice(-200);
+        const map = {};
+        for (const line of lines) {
+            let e;
+            try {
+                e = JSON.parse(line);
+            } catch (err) {
+                continue;
             }
-        });
-    }
-
-    function parseChoices(text) {
-        const choices = [];
-        if (text.includes("Allow")) choices.push("Allow");
-        if (text.includes("Deny")) choices.push("Deny");
-        if (text.includes("Always")) choices.push("Always");
-        return choices;
-    }
-
-    function getTicker(paneId) {
-        const ticker = root.agentTickers[paneId];
-        if (!ticker || ticker.length === 0) {
-            return "idle";
-        }
-        let message = "";
-        for (const entry of ticker) {
-            if (entry.file) {
-                const change = entry.added > 0 || entry.removed > 0 ? ` (+${entry.added} -${entry.removed})` : "";
-                message = `${entry.file}${change}`;
+            if (!e.pane)
+                continue;
+            const entry = map[e.pane] ?? (map[e.pane] = {
+                    ticker: "",
+                    permission: "",
+                    status: ""
+                });
+            if (e.event === "Permission") {
+                entry.permission = e.text || "";
+                entry.status = "blocked";
+            } else if (e.event === "Stop" || e.event === "Waiting") {
+                entry.permission = "";
+                entry.status = "idle";
+            } else {
+                const d = describe(e);
+                if (d)
+                    entry.ticker = d;
+                entry.permission = "";
+                entry.status = "working";
             }
         }
-        return message;
+        byPane = map;
     }
 
-    Timer {
-        id: fileWatchTimer
-        interval: 500
-        repeat: true
-        running: true
-        onTriggered: root.readEventsFile()
-    }
-
-    Component.onCompleted: {
-        Quickshell.exec(["mkdir", "-p", `${Paths.home}/.local/state/caelestia`]);
-        root.readEventsFile();
+    FileView {
+        path: `${Paths.state}/agents.jsonl`
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: root.parse(text())
     }
 }

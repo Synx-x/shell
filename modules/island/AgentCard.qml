@@ -1,139 +1,107 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import Quickshell
-import Caelestia
+import QtQuick.Layouts
 import Caelestia.Config
 import qs.components
+import qs.components.controls
 import qs.services
-import "../.." as Root
 
-Rectangle {
+// One agent: status, activity ticker, actions, optional live view.
+StyledRect {
     id: root
 
-    required property QtObject agent
-    property bool isBlocked: false
-    property bool isExpanded: false
-    property bool showLiveView: false
+    required property var agent
+    property bool live
 
-    radius: 8
-    color: isBlocked ? Tokens.colours.m3errorContainer : Tokens.colours.m3surfaceContainerLow
-    border.color: isBlocked ? Tokens.colours.m3error : Tokens.colours.m3outlineVariant
-    border.width: 1
-    implicitHeight: column.implicitHeight + 16
-    clip: true
+    signal toggleLive
 
-    Column {
-        id: column
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.margins: 8
-        spacing: 6
+    readonly property bool blocked: agent.status === "blocked"
+    readonly property string permission: AgentEvents.permissionFor(agent.paneId)
 
-        Row {
-            width: parent.width
-            spacing: 8
+    implicitHeight: layout.implicitHeight + Tokens.padding.medium * 2
+    radius: Tokens.rounding.medium
+    color: Colours.tPalette.m3surfaceContainerHigh
 
-            Rectangle {
-                id: statusDot
-                width: 8
-                height: 8
-                radius: 4
-                anchors.verticalCenter: parent.verticalCenter
-                color: {
-                    switch (root.agent.status) {
-                    case "working": return Tokens.colours.m3primary;
-                    case "blocked": return Tokens.colours.m3error;
-                    case "idle": return Tokens.colours.m3success;
-                    default: return Tokens.colours.m3outline;
-                    }
-                }
+    ColumnLayout {
+        id: layout
 
-                SequentialAnimationGroup {
-                    running: root.agent.status === "working"
-                    loops: Animation.Infinite
+        anchors.fill: parent
+        anchors.margins: Tokens.padding.medium
+        spacing: Tokens.spacing.small
 
-                    NumberAnimation {
-                        target: statusDot
-                        property: "opacity"
-                        from: 1; to: 0.4
-                        duration: 1000
-                    }
-                    NumberAnimation {
-                        target: statusDot
-                        property: "opacity"
-                        from: 0.4; to: 1
-                        duration: 1000
-                    }
-                }
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Tokens.spacing.small
+
+            StatusDot {
+                status: root.agent.status
             }
 
-            Column {
-                spacing: 2
+            StyledText {
                 Layout.fillWidth: true
-
-                Text {
-                    text: root.agent.name
-                    color: Tokens.colours.m3onSurface
-                    font.pixelSize: 12
-                    font.weight: Font.SemiBold
-                    elide: Text.ElideRight
-                    width: parent.width
-                }
-
-                Text {
-                    text: {
-                        const ticker = Root.Services.AgentEvents.getTicker(root.agent.paneId);
-                        return ticker || root.agent.status;
-                    }
-                    color: Tokens.colours.m3onSurfaceVariant
-                    font.pixelSize: 10
-                    elide: Text.ElideRight
-                    width: parent.width
-                }
+                text: root.agent.name
+                font: Tokens.font.body.medium
+                elide: Text.ElideRight
             }
 
-            Item { Layout.fillWidth: true }
+            StyledText {
+                text: root.blocked ? qsTr("needs you") : root.agent.status
+                color: root.blocked ? Colours.palette.m3error : Colours.palette.m3onSurfaceVariant
+                font: Tokens.font.label.small
+            }
 
-            Button {
-                text: "Jump"
-                onClicked: Root.Services.Agents.focus(root.agent.paneId)
+            IconButton {
+                icon: "terminal"
+                type: IconButton.Text
+                onClicked: root.toggleLive()
+            }
+
+            IconButton {
+                icon: "open_in_new"
+                type: IconButton.Text
+                onClicked: Agents.focus(root.agent.paneId)
             }
         }
 
-        Row {
-            width: parent.width
-            spacing: 6
-            visible: root.isBlocked
+        StyledText {
+            Layout.fillWidth: true
+            visible: text.length > 0
+            text: root.blocked && root.permission ? root.permission : AgentEvents.tickerFor(root.agent.paneId)
+            color: Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.body.small
+            wrapMode: root.blocked ? Text.Wrap : Text.NoWrap
+            elide: Text.ElideRight
+            maximumLineCount: root.blocked ? 4 : 1
+        }
 
-            Button {
-                text: "Allow"
-                onClicked: Root.Services.Agents.approve(root.agent.paneId, "Allow")
+        RowLayout {
+            visible: root.blocked
+            spacing: Tokens.spacing.small
+
+            TextButton {
+                text: qsTr("Allow")
+                type: TextButton.Filled
+                onClicked: Agents.approve(root.agent.paneId, "Allow")
             }
 
-            Button {
-                text: "Deny"
-                onClicked: Root.Services.Agents.approve(root.agent.paneId, "Deny")
+            TextButton {
+                text: qsTr("Always")
+                type: TextButton.Tonal
+                onClicked: Agents.approve(root.agent.paneId, "Always")
             }
 
-            Button {
-                text: "Always"
-                onClicked: Root.Services.Agents.approve(root.agent.paneId, "Always")
+            TextButton {
+                text: qsTr("Deny")
+                type: TextButton.Tonal
+                onClicked: Agents.approve(root.agent.paneId, "Deny")
             }
         }
 
         LiveView {
-            width: parent.width
-            visible: root.showLiveView
+            Layout.fillWidth: true
+            visible: root.live
             paneId: root.agent.paneId
-        }
-    }
-
-    MouseArea {
-        anchors.fill: parent
-        onClicked: {
-            root.showLiveView = !root.showLiveView;
         }
     }
 }

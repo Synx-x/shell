@@ -1,80 +1,64 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
-import Caelestia
+import Quickshell.Io
 import Caelestia.Config
 import qs.components
 import qs.services
-import "../.." as Root
 
-Rectangle {
+// Last 10 lines of an agent's pane, refreshed every second while visible.
+StyledRect {
     id: root
 
     required property string paneId
+    property var lines: []
 
-    radius: 4
-    color: Tokens.colours.m3surfaceContainerLowest
-    border.color: Tokens.colours.m3outlineVariant
-    border.width: 1
-    implicitHeight: 120
-    clip: true
+    implicitHeight: col.implicitHeight + Tokens.padding.small * 2
+    radius: Tokens.rounding.small
+    color: Colours.tPalette.m3surfaceContainerLowest
 
-    Column {
-        anchors.fill: parent
-        anchors.margins: 6
-        spacing: 4
+    Process {
+        id: readProc
 
-        Text {
-            text: "Live Output"
-            color: Tokens.colours.m3onSurfaceVariant
-            font.pixelSize: 9
-            font.weight: Font.Bold
-        }
-
-        Flickable {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            width: parent.width
-            height: parent.height - 20
-            contentHeight: liveText.implicitHeight
-            clip: true
-
-            Text {
-                id: liveText
-                width: parent.width
-                text: root.lastOutput
-                color: Tokens.colours.m3onSurface
-                font.family: "monospace"
-                font.pixelSize: 9
-                wrapMode: Text.Wrap
-                textFormat: Text.PlainText
+        command: [Quickshell.env("HOME") + "/.local/bin/herdr", "pane", "read", root.paneId, "--source", "recent", "--lines", "40"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const clean = text.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "").replace(/\r/g, "");
+                // Drop blank lines, box borders and the empty input prompt
+                root.lines = clean.split("\n").filter(l => /[^\s─━│┃╭╮╰╯═┄┈>❯-]/.test(l)).slice(-10);
             }
         }
     }
 
-    property string lastOutput: ""
-
     Timer {
-        id: updateTimer
         interval: 1000
         repeat: true
+        triggeredOnStart: true
         running: root.visible
+        onTriggered: readProc.running = true
+    }
 
-        onTriggered: {
-            const proc = Quickshell.exec(["herdr", "pane", "read", root.paneId, "--source", "recent", "--lines", "10"], result => {
-                if (result.stdout) {
-                    root.lastOutput = result.stdout;
-                }
-            });
+    ColumnLayout {
+        id: col
+
+        anchors.fill: parent
+        anchors.margins: Tokens.padding.small
+        spacing: 0
+
+        Repeater {
+            model: root.lines
+
+            StyledText {
+                required property string modelData
+
+                Layout.fillWidth: true
+                text: modelData
+                elide: Text.ElideRight
+                font: Tokens.font.mono.small
+                color: /^\s*[⏺●]/.test(modelData) ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+            }
         }
-    }
-
-    Component.onCompleted: {
-        updateTimer.start();
-    }
-
-    Component.onDestruction: {
-        updateTimer.stop();
     }
 }

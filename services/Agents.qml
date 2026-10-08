@@ -1,84 +1,93 @@
 pragma Singleton
-pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
 import Quickshell.Io
 
+// AI coding agents running in herdr panes. Input only ever goes to a herdr pane id.
 Singleton {
     id: root
 
-    property list<Agent> agents
-    property int agentCount: agents.length
-    readonly property bool hasAgents: agentCount > 0
+    // [{ paneId, name, status, cwd }]
+    property var agents: []
+    readonly property int count: agents.length
+    readonly property int workingCount: agents.filter(a => a.status === "working").length
+    readonly property var blocked: agents.filter(a => a.status === "blocked")
 
-    function refreshAgents() {
-        const proc = Quickshell.exec(["herdr", "agent", "list", "--json"], result => {
-            if (result.stdout) {
-                try {
-                    const data = JSON.parse(result.stdout);
-                    const agentList = data.agents || [];
-                    const newAgents = [];
-                    for (const agent of agentList) {
-                        newAgents.push({
-                            name: agent.name || "Unknown",
-                            paneId: agent.pane_id || "",
-                            status: agent.agent_status || "unknown",
-                            cwd: agent.cwd || "",
-                            workspaceId: agent.workspace_id || ""
-                        });
-                    }
-                    root.agents = newAgents;
-                } catch (e) {
-                    console.warn("Failed to parse herdr agent list:", e);
-                }
-            }
+    property var lastStatus: ({})
+
+    signal agentBlocked(string paneId)
+    signal agentFinished(string paneId)
+
+    // Claude Code permission dialog: 1 = Yes, 2 = Yes and don't ask again, Esc = No
+    function approve(paneId: string, choice: string): void {
+        const key = choice === "Always" ? "2" : choice === "Deny" ? "esc" : "1";
+        Quickshell.execDetached([Quickshell.env("HOME") + "/.local/bin/herdr", "pane", "send-keys", paneId, key]);
+    }
+
+    function answer(paneId: string, index: int): void {
+        Quickshell.execDetached([Quickshell.env("HOME") + "/.local/bin/herdr", "pane", "send-keys", paneId, String(index + 1)]);
+    }
+
+    // Bring the agent's herdr workspace and tab to the front
+    function focus(paneId: string): void {
+        const a = agents.find(x => x.paneId === paneId);
+        if (!a)
+            return;
+        const herdr = Quickshell.env("HOME") + "/.local/bin/herdr";
+        Quickshell.execDetached(["sh", "-c", `"${herdr}" workspace focus "$1" && "${herdr}" tab focus "$2"`, "sh", a.workspaceId, a.tabId]);
+    }
+
+    function parse(text: string): void {
+        let panes;
+        try {
+            panes = JSON.parse(text).result?.panes ?? [];
+        } catch (e) {
+            return;
+        }
+
+        // A pane is an agent when herdr knows its agent session; herdr's own status is
+        // often "unknown", so fall back to the Claude hook's events.
+        const next = panes.filter(p => p.agent_session).map(p => {
+            const herdrStatus = p.agent_status && p.agent_status !== "unknown" ? p.agent_status : "";
+            const cwd = p.foreground_cwd || p.cwd || "";
+            return {
+                paneId: p.pane_id,
+                name: p.terminal_title_stripped || cwd.split("/").pop() || p.pane_id,
+                status: herdrStatus || AgentEvents.statusFor(p.pane_id) || "idle",
+                cwd: cwd,
+                tabId: p.tab_id,
+                workspaceId: p.workspace_id
+            };
         });
+
+        const prev = lastStatus;
+        const seen = {};
+        for (const a of next) {
+            seen[a.paneId] = a.status;
+            if (a.status === "blocked" && prev[a.paneId] !== "blocked")
+                agentBlocked(a.paneId);
+            else if (a.status === "idle" && prev[a.paneId] === "working")
+                agentFinished(a.paneId);
+        }
+        lastStatus = seen;
+        agents = next;
     }
 
-    function approve(paneId, choice) {
-        const keyMap = {
-            "Allow": "Tab",
-            "Deny": "d",
-            "Always": "a"
-        };
-        const key = keyMap[choice] || "Tab";
-        Quickshell.exec(["herdr", "pane", "send-keys", paneId, key]);
-    }
+    Process {
+        id: listProc
 
-    function focus(paneId) {
-        Quickshell.exec(["herdr", "agent", "focus", paneId]);
-    }
-
-    function readTail(paneId, lines) {
-        return new Promise((resolve) => {
-            const proc = Quickshell.exec(["herdr", "pane", "read", paneId, "--source", "recent", "--lines", lines.toString()], result => {
-                if (result.stdout) {
-                    resolve(result.stdout);
-                } else {
-                    resolve("");
-                }
-            });
-        });
-    }
-
-    component Agent: QtObject {
-        property string name: ""
-        property string paneId: ""
-        property string status: "unknown"
-        property string cwd: ""
-        property string workspaceId: ""
+        command: [Quickshell.env("HOME") + "/.local/bin/herdr", "pane", "list"]
+        stdout: StdioCollector {
+            onStreamFinished: root.parse(text)
+        }
     }
 
     Timer {
-        id: refreshTimer
-        interval: 2000
-        repeat: true
+        interval: 1500
         running: true
-        onTriggered: root.refreshAgents()
-    }
-
-    Component.onCompleted: {
-        root.refreshAgents();
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: listProc.running = true
     }
 }

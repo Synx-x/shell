@@ -1,147 +1,149 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
-import Caelestia
 import Caelestia.Config
 import qs.components
 import qs.services
-import "../.." as Root
 
-Item {
+// Pill that springs open into a card: on hover, on click (pinned), or when an agent blocks.
+StyledRect {
     id: root
 
-    required property ScreenState screenState
-    required property Item dashboardPanel
+    property bool pinned
+    // paneId -> true for cards with the live view open; survives model refreshes
+    property var livePanes: ({})
+    property string doneText
 
-    property bool isExpanded: false
-    property string blockedPaneId: ""
-    property list<QtObject> permissionPrompts: []
+    readonly property bool alert: Agents.blocked.length > 0
+    readonly property bool expanded: pinned || hover.containsMouse || alert
+    readonly property var shownAgents: expanded && !pinned && !hover.containsMouse ? Agents.blocked : Agents.agents
 
-    readonly property real pillHeight: 32
-    readonly property real pillWidth: Math.min(150, parent.width - 40)
-    readonly property real cardWidth: 350
-    readonly property real cardMaxHeight: Math.min(500, parent.height - 100)
-
-    visible: Root.Services.Agents.hasAgents && !(root.screenState.dashboard && Root.Config.dashboard.enabled)
-    anchors.horizontalCenter: parent.horizontalCenter
-    anchors.top: parent.top
-    anchors.topMargin: 12
-
-    implicitWidth: isExpanded ? cardWidth : pillWidth
-    implicitHeight: isExpanded ? cardMaxHeight : pillHeight
-
-    onBlockedPaneIdChanged: {
-        if (blockedPaneId) {
-            isExpanded = true;
-        }
-    }
+    implicitWidth: expanded ? 420 : pill.implicitWidth + Tokens.padding.large * 2
+    implicitHeight: (expanded ? card.implicitHeight : pill.implicitHeight) + Tokens.padding.medium * 2
+    radius: expanded ? Tokens.rounding.large : implicitHeight / 2
+    color: Colours.palette.m3surfaceContainer
+    clip: true
 
     Behavior on implicitWidth {
-        Anim { type: Anim.DefaultSpatial }
+        Anim {
+            type: Anim.DefaultSpatial
+        }
     }
 
     Behavior on implicitHeight {
-        Anim { type: Anim.DefaultSpatial }
-    }
-
-    Rectangle {
-        id: background
-        anchors.fill: parent
-        radius: isExpanded ? 12 : pilldHeight / 2
-        color: Tokens.colours.m3surfaceContainer
-        border.color: Tokens.colours.m3outline
-        border.width: 1
-
-        Behavior on radius {
-            Anim { type: Anim.DefaultSpatial }
+        Anim {
+            type: Anim.DefaultSpatial
         }
     }
 
-    MouseArea {
-        id: pillClick
-        anchors.fill: parent
-        enabled: !root.isExpanded
-        onClicked: root.isExpanded = true
-    }
-
-    Flickable {
-        id: cardContent
-        anchors.fill: parent
-        anchors.margins: 8
-        clip: true
-        visible: root.isExpanded
-        contentHeight: cardColumn.implicitHeight
-
-        Column {
-            id: cardColumn
-            width: parent.width
-            spacing: 8
-
-            Text {
-                text: `${Root.Services.Agents.agentCount} agents working`
-                color: Tokens.colours.m3onSurface
-                font.pixelSize: 13
-                font.weight: Font.Bold
-                width: parent.width
-                elide: Text.ElideRight
-            }
-
-            Repeater {
-                model: Root.Services.Agents.agents
-                delegate: AgentCard {
-                    width: cardColumn.width
-                    agent: modelData
-                    isBlocked: modelData.paneId === root.blockedPaneId
-                }
-            }
+    Behavior on radius {
+        Anim {
+            type: Anim.DefaultSpatial
         }
-    }
-
-    Text {
-        id: pillText
-        visible: !root.isExpanded
-        anchors.centerIn: parent
-        text: `● ${Root.Services.Agents.agentCount} working`
-        color: Tokens.colours.m3onSurface
-        font.pixelSize: 11
-        font.weight: Font.Medium
-    }
-
-    Item {
-        id: closeArea
-        anchors.top: parent.top
-        anchors.right: parent.right
-        width: 24
-        height: 24
-        visible: root.isExpanded
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: root.isExpanded = false
-        }
-
-        Text {
-            anchors.centerIn: parent
-            text: "✕"
-            color: Tokens.colours.m3onSurface
-            font.pixelSize: 14
-        }
-    }
-
-    UsagePill {
-        visible: root.isExpanded
-        anchors.top: parent.top
-        anchors.right: parent.right
-        anchors.topMargin: 4
-        anchors.rightMargin: 28
     }
 
     Connections {
-        target: Root.Services.Agents
-        function onAgentsChanged() {
-            if (!Root.Services.Agents.hasAgents) {
-                root.isExpanded = false;
+        target: Agents
+
+        function onAgentFinished(paneId: string): void {
+            const a = Agents.agents.find(x => x.paneId === paneId);
+            root.doneText = `${a?.name ?? "Agent"} done`;
+            doneTimer.restart();
+        }
+    }
+
+    Timer {
+        id: doneTimer
+
+        interval: 3000
+        onTriggered: root.doneText = ""
+    }
+
+    MouseArea {
+        id: hover
+
+        anchors.fill: parent
+        hoverEnabled: true
+        acceptedButtons: Qt.LeftButton
+        onClicked: root.pinned = !root.pinned
+    }
+
+    RowLayout {
+        id: pill
+
+        anchors.centerIn: parent
+        spacing: Tokens.spacing.small
+        opacity: root.expanded ? 0 : 1
+        visible: opacity > 0
+
+        Behavior on opacity {
+            Anim {
+                type: Anim.FastEffects
+            }
+        }
+
+        StatusDot {
+            status: Agents.workingCount > 0 ? "working" : "idle"
+        }
+
+        StyledText {
+            text: root.doneText || (Agents.workingCount > 0 ? qsTr("%1 working").arg(Agents.workingCount) : qsTr("%1 idle").arg(Agents.count))
+            font: Tokens.font.label.medium
+        }
+
+        UsagePill {
+            compact: true
+        }
+    }
+
+    ColumnLayout {
+        id: card
+
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.margins: Tokens.padding.medium
+        spacing: Tokens.spacing.small
+        opacity: root.expanded ? 1 : 0
+        visible: opacity > 0
+
+        Behavior on opacity {
+            Anim {
+                type: Anim.DefaultEffects
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+
+            StyledText {
+                Layout.fillWidth: true
+                text: root.alert && root.shownAgents === Agents.blocked ? qsTr("Needs you") : qsTr("Agents")
+                font: Tokens.font.title.small
+            }
+
+            UsagePill {}
+        }
+
+        Repeater {
+            model: ScriptModel {
+                values: root.shownAgents
+                objectProp: "paneId"
+            }
+
+            AgentCard {
+                required property var modelData
+
+                Layout.fillWidth: true
+                agent: modelData
+                live: root.livePanes[modelData.paneId] ?? false
+                onToggleLive: {
+                    const next = Object.assign({}, root.livePanes);
+                    next[modelData.paneId] = !live;
+                    root.livePanes = next;
+                }
             }
         }
     }

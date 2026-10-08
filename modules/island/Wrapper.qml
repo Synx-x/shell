@@ -1,21 +1,37 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import Caelestia.Config
 import qs.components
+import qs.services
 
+// Top-center agent island. Hidden while the dashboard is open, since both use the top edge.
 Item {
     id: root
 
     required property ScreenState screenState
-    required property Item dashboardPanel
+
+    readonly property bool shown: Agents.count > 0 && !screenState.dashboard
 
     anchors.top: parent.top
     anchors.horizontalCenter: parent.horizontalCenter
-    anchors.margins: 8
+    anchors.topMargin: Tokens.padding.small
+
+    implicitWidth: shown ? island.implicitWidth : 0
+    implicitHeight: shown ? island.implicitHeight : 0
+    opacity: shown ? 1 : 0
+    visible: opacity > 0
+
+    Behavior on opacity {
+        Anim {
+            type: Anim.DefaultEffects
+        }
+    }
 
     Island {
-        anchors.fill: parent
-        screenState: root.screenState
-        dashboardPanel: root.dashboardPanel
+        id: island
+
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
     }
 }
