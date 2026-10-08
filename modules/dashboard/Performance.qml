@@ -165,6 +165,13 @@ Item {
                     active: true
                     sourceComponent: TopProcessesCard {}
                 }
+
+                WrappedLoader {
+                    id: gpuVramCard
+
+                    active: true
+                    sourceComponent: GpuVramCard {}
+                }
             }
         }
 
