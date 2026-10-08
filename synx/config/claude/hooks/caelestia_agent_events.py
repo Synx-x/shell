@@ -35,6 +35,29 @@ def line_delta(tool, tool_input):
     return 0, 0
 
 
+def last_assistant_text(transcript_path):
+    """Last assistant text block in the transcript, for the finished summary."""
+    try:
+        with open(transcript_path, "rb") as f:
+            f.seek(0, os.SEEK_END)
+            f.seek(max(0, f.tell() - 200_000))
+            lines = f.read().decode("utf-8", "ignore").splitlines()
+    except OSError:
+        return ""
+    for line in reversed(lines):
+        try:
+            entry = json.loads(line)
+        except ValueError:
+            continue
+        message = entry.get("message") or {}
+        if entry.get("type") != "assistant" or not isinstance(message.get("content"), list):
+            continue
+        for block in message["content"]:
+            if block.get("type") == "text" and block.get("text", "").strip():
+                return block["text"].strip()[:400]
+    return ""
+
+
 def build(data):
     name = data.get("hook_event_name", "")
     tool = data.get("tool_name", "")
@@ -44,11 +67,18 @@ def build(data):
     if name == "UserPromptSubmit":
         event["event"] = "Prompt"
     elif name == "PreToolUse":
+        if tool == "AskUserQuestion":
+            event["event"] = "Question"
+            event["text"] = json.dumps(tool_input.get("questions", []))[:6000]
+            return event
         event["event"] = "Read" if tool in ("Read", "Grep", "Glob") else tool or "Tool"
         event["file"] = tool_input.get("file_path") or tool_input.get("path")
         if tool == "Bash":
-            event["text"] = (tool_input.get("command") or "")[:120]
+            event["text"] = (tool_input.get("command") or "")[:300]
     elif name == "PostToolUse":
+        if tool == "AskUserQuestion":
+            event["event"] = "Answered"
+            return event
         if tool not in ("Edit", "Write", "MultiEdit"):
             return None
         event["event"] = tool
@@ -61,6 +91,7 @@ def build(data):
         event["text"] = message[:300]
     elif name == "Stop":
         event["event"] = "Stop"
+        event["text"] = last_assistant_text(data.get("transcript_path", ""))
     else:
         return None
     return event
