@@ -16,4 +16,6 @@
 # anchored regex matched pipewire but not pipewire-pulse (14 MiB), so a
 # memory spike killed it, its respawns hit the systemd start limit, and
 # all PulseAudio clients lost sound. easyeffects carries the default sink.
-EARLYOOM_ARGS="-m 10,5 -s 100,100 -r 60 -p --avoid ^(systemd|systemd-.*|Hyprland|sshd|dbus-daemon|dbus-broker.*|.sd-pam.|xdg-.*|dconf-service|at-spi.*|pipewire.*|wireplumber|easyeffects|tailscaled|uwsm|earlyoom)$ --prefer ^(rustc|cc1|cc1plus|ld|ld.lld|lld|mold|clang.*|dota2|chrome|chromium|firefox|electron|.*vitest.*)$"
+# qs and quickshell (the Caelestia shell) were added the same day: the
+# spike killed the bar too, and the session has no panel without it.
+EARLYOOM_ARGS="-m 10,5 -s 100,100 -r 60 -p --avoid ^(systemd|systemd-.*|Hyprland|sshd|dbus-daemon|dbus-broker.*|.sd-pam.|xdg-.*|dconf-service|at-spi.*|pipewire.*|wireplumber|easyeffects|qs|quickshell|tailscaled|uwsm|earlyoom)$ --prefer ^(rustc|cc1|cc1plus|ld|ld.lld|lld|mold|clang.*|dota2|chrome|chromium|firefox|electron|.*vitest.*)$"
