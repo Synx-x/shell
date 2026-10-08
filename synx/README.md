@@ -53,6 +53,7 @@ Copies of these live in `synx/config/`. Put each one back at its path to rebuild
 | `kitty/kitty.conf` | `~/.config/kitty/kitty.conf` | Ctrl+V runs `kitty-smart-paste`. |
 | `bin/kitty-smart-paste` | `~/.local/bin/kitty-smart-paste` | Passes Ctrl+V through for images, pastes text directly. |
 | `bin/computer-use-linux-install` | Run it, do not copy it | Builds the [computer-use-linux fork](https://github.com/Synx-x/computer-use-linux) on branch `feat/grim-capture-backend` and installs it to `~/.local/bin/computer-use-linux`. The binary stays out of this repo. Register it after with `claude mcp add --scope user computer-use-linux -- computer-use-linux mcp`. |
+| `claude/hooks/caelestia_agent_events.py` | `~/.claude/hooks/caelestia_agent_events.py` | Hook script for agent island. Tracks Claude Code tool use and permission prompts, appends JSONL events to `~/.local/state/caelestia/agents.jsonl`. Register in `~/.claude/settings.json` with the snippet below. |
 | `gaming-mode/gaming-mode.sh` | `~/.claude/scripts/gaming-mode.sh` | Engine behind the bar's game mode button. Needs its sudoers rule, `~/.claude/state/gaming-mode.sudoers`, in `/etc/sudoers.d/zz-gaming-mode`. |
 | `gaming-mode/keep.txt` | `~/.config/gaming-mode/keep.txt` | Processes the game mode sweep never kills, one command-line substring per line. |
 
@@ -61,3 +62,21 @@ Copies of these live in `synx/config/`. Put each one back at its path to rebuild
 `caelestia-update` installs `synx/udev/99-caelestia-battery.rules` to `/etc/udev/rules.d/`.
 That rule gives the `wheel` group write access to the battery charge limit.
 PR #1908 ships a rule that makes the file writable by all users. This rule replaces it.
+
+## Agent Island Hook Registration
+
+To enable the agent island in Caelestia, register the hook in `~/.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "pre_tool_use": "~/.claude/hooks/caelestia_agent_events.py",
+    "post_tool_use": "~/.claude/hooks/caelestia_agent_events.py",
+    "on_notification": "~/.claude/hooks/caelestia_agent_events.py",
+    "on_stop": "~/.claude/hooks/caelestia_agent_events.py"
+  }
+}
+```
+
+The hook writes events in real-time to `~/.local/state/caelestia/agents.jsonl` (JSONL format, one event per line).
+Each event captures tool use (Edit/Write/MultiEdit), file paths, line counts, and permission prompts.
