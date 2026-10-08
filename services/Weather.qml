@@ -30,6 +30,10 @@ Singleton {
     readonly property real windSpeed: cc?.windSpeed ?? 0
     readonly property string sunrise: cc ? Qt.formatDateTime(new Date(cc.sunrise), Units.twelveHourClock ? "h:mm A" : "h:mm") : "--:--"
     readonly property string sunset: cc ? Qt.formatDateTime(new Date(cc.sunset), Units.twelveHourClock ? "h:mm A" : "h:mm") : "--:--"
+    readonly property int uvIndex: cc?.uvIndex ?? 0
+    readonly property int usAqi: cc?.usAqi ?? -1
+    readonly property var goldenHourStart: cc?.goldenHourStart ?? null
+    readonly property var goldenHourEnd: cc?.goldenHourEnd ?? null
 
     readonly property var cachedCities: new Map()
 
@@ -37,6 +41,17 @@ Singleton {
         const unit = GlobalConfig.services.weatherUnits;
         const value = temp !== undefined ? Math.round(Units.toTemperature(temp, unit)) : "--";
         return Units.formatTemp(value, unit, compact);
+    }
+
+    function calculateGoldenHour(sunrise: string, sunset: string): var {
+        const sunriseTime = new Date(sunrise.replace(" ", "T"));
+        const sunsetTime = new Date(sunset.replace(" ", "T"));
+        const dayDuration = (sunsetTime - sunriseTime) / (1000 * 60);
+        const goldenHourDuration = Math.min(60, Math.max(20, dayDuration * 0.1));
+        return {
+            start: new Date(sunriseTime.getTime() + goldenHourDuration * 60 * 1000),
+            end: new Date(sunsetTime.getTime() - goldenHourDuration * 60 * 1000)
+        };
     }
 
     function reload(): void {
@@ -237,6 +252,10 @@ Singleton {
             if (!json.current || !json.daily)
                 return;
 
+            const sunrise = json.daily.sunrise[0].replace("T", " ");
+            const sunset = json.daily.sunset[0].replace("T", " ");
+            const goldenHour = calculateGoldenHour(sunrise, sunset);
+
             cc = {
                 weatherCode: json.current.weather_code,
                 tempC: json.current.temperature_2m,
@@ -244,8 +263,12 @@ Singleton {
                 humidity: json.current.relative_humidity_2m,
                 windSpeed: json.current.wind_speed_10m,
                 isDay: json.current.is_day,
-                sunrise: json.daily.sunrise[0].replace("T", " "),
-                sunset: json.daily.sunset[0].replace("T", " ")
+                sunrise: sunrise,
+                sunset: sunset,
+                uvIndex: Math.round(json.current.uv_index ?? 0),
+                usAqi: json.current.us_aqi ?? -1,
+                goldenHourStart: goldenHour.start,
+                goldenHourEnd: goldenHour.end
             };
 
             const forecastList = [];
@@ -273,7 +296,8 @@ Singleton {
                     tempC: Math.round(json.hourly.temperature_2m[i]),
                     precipChance: json.hourly.precipitation_probability[i],
                     weatherCode: json.hourly.weather_code[i],
-                    icon: Icons.getWeatherIcon(json.hourly.weather_code[i])
+                    icon: Icons.getWeatherIcon(json.hourly.weather_code[i]),
+                    uvIndex: Math.round(json.hourly.uv_index[i] ?? 0)
                 });
             }
             hourlyForecast = hourlyList;
@@ -286,7 +310,7 @@ Singleton {
 
         const [lat, lon] = loc.split(",").map(s => s.trim());
         const baseUrl = "https://api.open-meteo.com/v1/forecast";
-        const params = ["latitude=" + lat, "longitude=" + lon, "hourly=weather_code,temperature_2m,precipitation_probability", "daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset", "current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m", "timezone=auto", "forecast_days=7"];
+        const params = ["latitude=" + lat, "longitude=" + lon, "hourly=weather_code,temperature_2m,precipitation_probability,uv_index", "daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max", "current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,uv_index,us_aqi", "timezone=auto", "forecast_days=7"];
 
         return baseUrl + "?" + params.join("&");
     }
