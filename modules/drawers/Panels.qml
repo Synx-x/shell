@@ -4,6 +4,7 @@ import Caelestia.Config
 import qs.components
 import qs.modules.bar as Bar
 import qs.modules.dashboard as Dashboard
+import qs.modules.island as Island
 import qs.modules.launcher as Launcher
 import qs.modules.notifications as Notifications
 import qs.modules.osd as Osd
@@ -29,6 +30,7 @@ Item {
     readonly property alias sessionWrapper: sessionWrapper
     readonly property alias launcher: launcher
     readonly property alias dashboard: dashboard
+    readonly property alias island: island
     readonly property alias clipboardPreview: clipboardPreview
     readonly property alias popouts: popoutsWrapper.content
     readonly property alias popoutsWrapper: popoutsWrapper
@@ -128,6 +130,17 @@ Item {
         screenState: root.screenState
         position: root.geometry.effectiveDashboardPosition
         onBottom: root.geometry.dashboardOnBottom
+    }
+
+    Island.Wrapper {
+        id: island
+
+        screenState: root.screenState
+        dashboardPanel: dashboard
+
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.margins: 8
     }
 
     BarPopouts.ClipWrapper {
