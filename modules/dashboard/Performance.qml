@@ -115,7 +115,7 @@ Item {
 
             RowLayout {
                 spacing: Tokens.spacing.medium
-                visible: storageCard.active || networkCard.active || memoryCard.active
+                visible: storageCard.active || networkCard.active || memoryCard.active || gpuBadge.active || thermalCard.active || powerCard.active || topProcessesCard.active
 
                 WrappedLoader {
                     id: storageCard
@@ -136,6 +136,34 @@ Item {
 
                     active: Config.dashboard.performance.showMemory
                     sourceComponent: MemoryCard {}
+                }
+
+                WrappedLoader {
+                    id: gpuBadge
+
+                    active: true
+                    sourceComponent: GpuBadge {}
+                }
+
+                WrappedLoader {
+                    id: thermalCard
+
+                    active: true
+                    sourceComponent: ThermalCard {}
+                }
+
+                WrappedLoader {
+                    id: powerCard
+
+                    active: true
+                    sourceComponent: PowerCard {}
+                }
+
+                WrappedLoader {
+                    id: topProcessesCard
+
+                    active: true
+                    sourceComponent: TopProcessesCard {}
                 }
             }
         }
