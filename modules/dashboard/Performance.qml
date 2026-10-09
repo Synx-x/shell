@@ -138,49 +138,6 @@ Item {
                     sourceComponent: MemoryCard {}
                 }
             }
-
-            RowLayout {
-                spacing: Tokens.spacing.medium
-
-                WrappedLoader {
-                    id: gpuBadge
-
-                    active: true
-                    sourceComponent: GpuBadge {}
-                }
-
-                WrappedLoader {
-                    id: thermalCard
-
-                    active: true
-                    sourceComponent: ThermalCard {}
-                }
-
-                WrappedLoader {
-                    id: powerCard
-
-                    active: true
-                    sourceComponent: PowerCard {}
-                }
-            }
-
-            RowLayout {
-                spacing: Tokens.spacing.medium
-
-                WrappedLoader {
-                    id: topProcessesCard
-
-                    active: true
-                    sourceComponent: TopProcessesCard {}
-                }
-
-                WrappedLoader {
-                    id: gpuVramCard
-
-                    active: true
-                    sourceComponent: GpuVramCard {}
-                }
-            }
         }
 
         WrappedLoader {

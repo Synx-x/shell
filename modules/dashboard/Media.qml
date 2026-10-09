@@ -13,7 +13,7 @@ Item {
     required property ScreenState screenState
 
     implicitWidth: Tokens.sizes.dashboard.mediaTabWidth
-    implicitHeight: Math.max(Tokens.sizes.dashboard.mediaTabHeight, (content.item?.implicitHeight ?? 0) + Tokens.padding.large * 2)
+    implicitHeight: Tokens.sizes.dashboard.mediaTabHeight
 
     BackgroundShapes {
         anchors.fill: parent
