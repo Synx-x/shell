@@ -50,7 +50,7 @@ Copies of these live in `synx/config/`. Put each one back at its path to rebuild
 | `earlyoom/earlyoom` | `/etc/default/earlyoom` | Kills compiler jobs first under memory pressure. |
 | `earlyoom/earlyoom-churn-*`, `earlyoom/churn.conf` | `/usr/local/bin/` (scripts), `/etc/systemd/system/` (units), `/etc/systemd/system/earlyoom.service.d/churn.conf` | Churn breaker. A process killed 3 times in 60 s, such as a respawning `steamwebhelper`, goes on earlyoom's ignore list for 15 min. Run `sudo systemctl daemon-reload && sudo systemctl restart earlyoom && sudo systemctl enable --now earlyoom-churn.path earlyoom-churn.timer`. |
 | `pacman/ignorepkg.conf` | `/etc/pacman.conf`, `[options]` section | Stops paru replacing this build. |
-| `kitty/kitty.conf` | `~/.config/kitty/kitty.conf` | Ctrl+V runs `kitty-smart-paste`. |
+| `kitty/kitty.conf` | `~/.config/kitty/kitty.conf` | Ctrl+V runs `kitty-smart-paste`. Nerd Font icons map to kitty's bundled Symbols Nerd Font Mono. |
 | `bin/kitty-smart-paste` | `~/.local/bin/kitty-smart-paste` | Passes Ctrl+V through for images, pastes text directly. |
 | `bin/computer-use-linux-install` | Run it, do not copy it | Builds the [computer-use-linux fork](https://github.com/Synx-x/computer-use-linux) on branch `feat/grim-capture-backend` and installs it to `~/.local/bin/computer-use-linux`. The binary stays out of this repo. Register it after with `claude mcp add --scope user computer-use-linux -- computer-use-linux mcp`. |
 | `claude/hooks/caelestia_agent_events.py` | `~/.claude/hooks/caelestia_agent_events.py` | Hook script for agent island. Tracks Claude Code tool use and permission prompts, appends JSONL events to `~/.local/state/caelestia/agents.jsonl`. Register in `~/.claude/settings.json` with the snippet below. |
