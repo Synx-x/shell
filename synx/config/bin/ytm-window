@@ -1,0 +1,8 @@
+#!/bin/sh
+# Open ytm in its own kitty window, drawn in IBM Plex Mono.
+# Only this window changes font. Other kitty windows keep kitty.conf's font.
+# Start it with `hyprctl dispatch exec ytm-window`, so the window gets a clean environment.
+exec kitty --title ytm \
+    -o font_family="IBM Plex Mono" \
+    -o bold_font=auto -o italic_font=auto -o bold_italic_font=auto \
+    zsh -ic 'ytm; exec zsh'
